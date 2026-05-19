@@ -1,0 +1,2353 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0F8A6B">
+<title>Class Fund · ม.6/9</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#FAF8F2;
+  --surface:#FFFFFF;
+  --surface-2:#F4F1E8;
+  --primary:#0F8A6B;
+  --primary-deep:#0A6B53;
+  --primary-ink:#063D2F;
+  --primary-tint:#E8F5EF;
+  --primary-soft:#D4ECD9;
+  --accent:#F5B638;
+  --accent-deep:#D69A1F;
+  --accent-tint:#FEF3D6;
+  --ink:#1A2E2A;
+  --ink-2:#3F524C;
+  --ink-3:#7A867F;
+  --ink-4:#B4BCB6;
+  --border:#E8E4D8;
+  --border-strong:#D5D0C0;
+  --danger:#D94B53;
+  --danger-tint:#FBE6E7;
+  --warning:#E89A2A;
+  --warning-tint:#FCEFD5;
+}
+html,body{min-height:100%;font-family:'IBM Plex Sans Thai',sans-serif;color:var(--ink);background:var(--bg);overflow-x:hidden;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+body{
+  background:
+    radial-gradient(1200px 600px at 12% -10%,rgba(15,138,107,.10),transparent 60%),
+    radial-gradient(900px 500px at 95% 8%,rgba(245,182,56,.08),transparent 60%),
+    radial-gradient(900px 700px at 50% 110%,rgba(15,138,107,.06),transparent 60%),
+    linear-gradient(180deg,#FAF8F2 0%,#F6F2E6 60%,#FAF8F2 100%);
+  background-attachment:fixed;
+  min-height:100vh;
+}
+button{font-family:inherit;color:inherit;cursor:pointer;border:none;background:none}
+input,select,textarea{font-family:inherit;color:inherit}
+img{display:block;max-width:100%}
+
+/* === Typography utilities === */
+.num{font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;letter-spacing:-.3px}
+.num-hero{font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;font-size:42px;font-weight:800;letter-spacing:-1.4px;line-height:1}
+.num-stat{font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;font-size:24px;font-weight:800;letter-spacing:-.5px}
+.num-md{font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;font-size:18px;font-weight:700;letter-spacing:-.4px}
+.num-sm{font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;font-size:14px;font-weight:600;letter-spacing:-.2px}
+.label-cap{font-size:11px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--ink-3)}
+.h1{font-size:28px;font-weight:700;letter-spacing:-.5px;line-height:1.15}
+.h2{font-size:20px;font-weight:700;letter-spacing:-.3px;line-height:1.2}
+.h3{font-size:16px;font-weight:600;letter-spacing:-.1px}
+
+/* === Cards & surfaces === */
+.card{background:#fff;border:1px solid var(--border);border-radius:18px;box-shadow:0 1px 2px rgba(15,46,42,.04),0 10px 28px -16px rgba(15,46,42,.10)}
+.card-flat{background:var(--surface-2);border:1px solid var(--border);border-radius:14px}
+.hero-mint{background:linear-gradient(165deg,#0F8A6B 0%,#0A6B53 60%,#063D2F 100%);color:#fff;border-radius:26px;padding:22px;position:relative;overflow:hidden;box-shadow:0 16px 32px -16px rgba(10,107,83,.5)}
+.hero-mint::before{content:'';position:absolute;top:60px;right:-90px;width:240px;height:240px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#FFD56A,#F5B638 70%,rgba(214,154,31,.9));opacity:.55;pointer-events:none}
+.glass-row{background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.22);box-shadow:inset 0 1px 0 rgba(255,255,255,.18);border-radius:18px}
+
+/* === Buttons === */
+.btn{padding:12px 22px;border-radius:14px;font-size:14px;font-weight:600;letter-spacing:.2px;cursor:pointer;transition:transform .15s,box-shadow .15s,background .15s;display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap;border:none}
+.btn-p{background:linear-gradient(135deg,#0F8A6B 0%,#0A6B53 100%);color:#fff;box-shadow:0 6px 18px rgba(15,138,107,.28),inset 0 1px 0 rgba(255,255,255,.2)}
+.btn-p:hover{transform:translateY(-1px);box-shadow:0 12px 26px rgba(15,138,107,.4)}
+.btn-p:active{transform:translateY(0)}
+.btn-p:disabled{background:rgba(15,46,42,.07);color:rgba(15,46,42,.32);box-shadow:none;cursor:not-allowed;transform:none}
+.btn-d{background:#FFFFFF;color:var(--ink);border:1px solid var(--border-strong)}
+.btn-d:hover{background:var(--surface-2)}
+.btn-x{background:linear-gradient(135deg,#1A2E2A 0%,#063D2F 100%);color:#fff;box-shadow:0 6px 18px rgba(15,46,42,.32)}
+.btn-x:hover{transform:translateY(-1px);box-shadow:0 12px 26px rgba(15,46,42,.4)}
+.btn-r{background:var(--danger);color:#fff;box-shadow:0 4px 12px rgba(217,75,83,.28)}
+.btn-r:hover{transform:translateY(-1px);box-shadow:0 10px 22px rgba(217,75,83,.4)}
+.btn-g{background:#fff;color:var(--ink-2);border:1px solid var(--border)}
+.btn-g:hover{background:var(--surface-2);color:var(--ink)}
+
+/* === Inputs === */
+input,select,textarea{background:#FFFFFF;border:1px solid var(--border-strong);border-radius:12px;padding:12px 14px;font-size:14px;outline:none;width:100%;transition:border-color .15s,box-shadow .15s}
+input:focus,select:focus,textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(15,138,107,.16)}
+input::placeholder,textarea::placeholder{color:rgba(15,46,42,.32)}
+
+/* === Pills / Badges === */
+.pill{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:10px;font-size:12px;font-weight:600}
+.pill-mint{background:var(--primary-tint);color:var(--primary-deep);border:1px solid rgba(15,138,107,.18)}
+.pill-gold{background:var(--accent-tint);color:var(--accent-deep);border:1px solid rgba(245,182,56,.28)}
+.pill-amber{background:var(--warning-tint);color:#A66A0F;border:1px solid rgba(232,154,42,.30)}
+.pill-rose{background:var(--danger-tint);color:#A82B33;border:1px solid rgba(217,75,83,.22)}
+.pill-ghost{background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.3)}
+
+/* === Avatar === */
+.av{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;background:var(--primary-tint);color:var(--primary-deep);font-weight:700;flex-shrink:0;line-height:1;text-transform:uppercase}
+
+/* === Animations === */
+@keyframes fadeUp{from{transform:translateY(14px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideIn{from{transform:translateX(-14px);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes popIn{0%{transform:scale(.82);opacity:0}65%{transform:scale(1.06)}100%{transform:scale(1);opacity:1}}
+@keyframes crownBob{0%,100%{transform:translateY(0) rotate(-6deg)}50%{transform:translateY(-7px) rotate(6deg)}}
+@keyframes goldGlow{0%,100%{box-shadow:0 0 22px rgba(245,182,56,.45)}50%{box-shadow:0 0 38px rgba(245,182,56,.8)}}
+@keyframes pulseSoft{0%,100%{opacity:.85}50%{opacity:.3}}
+@keyframes shimmer{0%{background-position:-200% center}100%{background-position:200% center}}
+@keyframes spring{0%{transform:scale(0);opacity:0}60%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.fade-up{animation:fadeUp .5s cubic-bezier(.34,1.4,.64,1) both}
+.fade-in{animation:fadeIn .35s ease both}
+.slide-in{animation:slideIn .3s ease both}
+.pop-in{animation:popIn .4s cubic-bezier(.34,1.56,.64,1) both}
+
+/* === Scrollbar === */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(15,46,42,.14);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:rgba(15,138,107,.4)}
+
+/* === Toast === */
+#toast{position:fixed;left:50%;bottom:max(28px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:9999;padding:11px 22px;border-radius:30px;font-size:13px;font-weight:600;color:#fff;box-shadow:0 14px 28px rgba(0,0,0,.2);animation:fadeUp .25s ease both;max-width:90vw}
+#toast.info{background:rgba(15,138,107,.96)}
+#toast.success{background:rgba(15,138,107,.96)}
+#toast.error{background:rgba(217,75,83,.96)}
+#toast.warn{background:rgba(232,154,42,.96)}
+
+/* === Slip zoom overlay === */
+#slipZoom{position:fixed;inset:0;background:rgba(15,46,42,.86);backdrop-filter:blur(6px);z-index:9998;display:flex;align-items:center;justify-content:center;padding:20px;cursor:zoom-out;animation:fadeIn .2s ease both}
+#slipZoom img{max-width:100%;max-height:90vh;border-radius:12px;box-shadow:0 24px 60px rgba(0,0,0,.4)}
+
+/* === Loading overlay === */
+.loader{display:inline-block;width:18px;height:18px;border:2.5px solid rgba(15,138,107,.2);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite}
+
+/* === Stat striped bar === */
+.bar{height:10px;border-radius:5px;background:rgba(15,46,42,.07);overflow:hidden;position:relative}
+.bar > .fill{position:absolute;left:0;top:0;height:100%;background:linear-gradient(90deg,#0A6B53,#0F8A6B);border-radius:5px;transition:width .8s cubic-bezier(.34,1.4,.64,1)}
+.bar > .pending{position:absolute;top:0;height:100%;background:repeating-linear-gradient(45deg,rgba(232,154,42,.45) 0 6px,rgba(232,154,42,.15) 6px 12px)}
+
+/* ============== MOBILE LAYOUT ============== */
+.m-shell{min-height:100vh;padding-bottom:90px;position:relative;z-index:1}
+.m-topbar{position:sticky;top:0;z-index:30;background:rgba(250,248,242,.92);backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;min-height:calc(54px + env(safe-area-inset-top));padding-top:calc(14px + env(safe-area-inset-top))}
+.m-main{padding:16px;max-width:540px;margin:0 auto}
+.m-bottom-nav{position:fixed;left:0;right:0;bottom:0;z-index:40;padding:10px 12px calc(20px + env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(250,248,242,0) 0%,rgba(250,248,242,.96) 40%,#FAF8F2 100%);pointer-events:none}
+.m-bottom-nav > .pill-bar{pointer-events:auto;background:#fff;border:1px solid var(--border);border-radius:28px;padding:8px;display:flex;gap:4px;box-shadow:0 16px 40px -8px rgba(15,46,42,.18),0 2px 6px rgba(15,46,42,.05)}
+.m-bottom-nav button{flex:1;min-height:48px;padding:8px 10px;border-radius:22px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:10px;font-weight:600;color:var(--ink-3);transition:all .18s}
+.m-bottom-nav button.on{background:#1A2E2A;color:#fff;box-shadow:0 6px 16px rgba(15,46,42,.28)}
+.m-bottom-nav button svg{width:20px;height:20px;display:block}
+.m-tab-bar{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:10px 16px;background:rgba(244,241,232,.66);border-bottom:1px solid var(--border)}
+.m-tab-bar::-webkit-scrollbar{display:none}
+.m-tab-bar button{padding:8px 14px;border-radius:22px;background:#fff;border:1px solid var(--border);font-size:12px;font-weight:600;color:var(--ink-3);white-space:nowrap;transition:all .15s;display:flex;align-items:center;gap:6px}
+.m-tab-bar button.on{background:#1A2E2A;color:#fff;border-color:#1A2E2A}
+
+/* ============== DESKTOP LAYOUT ============== */
+.d-shell{min-height:100vh;display:flex;position:relative;z-index:1}
+.d-sidebar{width:240px;flex-shrink:0;border-right:1px solid var(--border);background:#fff;padding:22px 18px;display:flex;flex-direction:column;gap:14px;position:sticky;top:0;height:100vh}
+.d-brand{display:flex;align-items:center;gap:11px;padding:6px 4px 18px;border-bottom:1px solid var(--border);margin-bottom:4px}
+.d-brand-logo{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#0F8A6B,#0A6B53);display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;box-shadow:0 6px 16px rgba(15,138,107,.32)}
+.d-nav{flex:1;display:flex;flex-direction:column;gap:3px;overflow-y:auto}
+.d-nav button{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:11px;font-size:14px;font-weight:500;color:var(--ink-2);text-align:left;transition:all .15s}
+.d-nav button:hover{background:var(--surface-2);color:var(--ink)}
+.d-nav button.on{background:linear-gradient(135deg,#0F8A6B,#0A6B53);color:#fff;font-weight:600;box-shadow:0 6px 14px rgba(15,138,107,.28)}
+.d-nav button.on .d-nav-badge{background:rgba(255,255,255,.22);color:#fff}
+.d-nav-badge{margin-left:auto;background:var(--accent-tint);color:var(--accent-deep);padding:2px 8px;border-radius:8px;font-size:11px;font-weight:700}
+.d-user-card{background:var(--surface-2);border-radius:13px;padding:10px 12px;display:flex;align-items:center;gap:10px;margin-top:auto}
+.d-main{flex:1;display:flex;flex-direction:column;min-width:0}
+.d-topbar{padding:18px 32px;border-bottom:1px solid var(--border);background:rgba(250,248,242,.86);backdrop-filter:blur(14px);display:flex;align-items:center;justify-content:space-between;gap:16px;position:sticky;top:0;z-index:20}
+.d-topbar h1{font-size:22px;font-weight:700;letter-spacing:-.3px}
+.d-content{flex:1;padding:28px 32px 60px;max-width:1280px;width:100%;margin:0 auto}
+
+/* === PIN numpad === */
+.numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-width:300px;margin:0 auto}
+.numpad button{padding:18px 0;border-radius:14px;background:#fff;border:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:600;color:var(--ink);transition:all .12s;min-height:62px}
+.numpad button:active{transform:scale(.94);background:var(--surface-2)}
+.numpad button.act{background:linear-gradient(135deg,#0F8A6B,#0A6B53);color:#fff;box-shadow:0 6px 16px rgba(15,138,107,.32)}
+.numpad button.back{background:transparent;border-color:transparent;color:var(--ink-3);font-size:18px}
+.pin-dots{display:flex;gap:14px;justify-content:center;margin:8px 0 26px}
+.pin-dots > div{width:18px;height:18px;border-radius:50%;background:transparent;border:2px solid var(--border-strong);transition:all .2s}
+.pin-dots > div.f{background:var(--primary);border-color:var(--primary);transform:scale(1.1);box-shadow:0 0 0 4px rgba(15,138,107,.18)}
+
+/* === Step indicator === */
+.steps{display:flex;align-items:center;gap:6px}
+.steps > div{height:4px;border-radius:2px;background:var(--border);width:24px;transition:all .25s}
+.steps > div.on{background:var(--primary);width:36px}
+.steps > div.done{background:var(--primary)}
+
+/* === Success scale-in === */
+.success-circle{width:96px;height:96px;border-radius:50%;background:linear-gradient(135deg,#0F8A6B,#0A6B53);color:#fff;display:flex;align-items:center;justify-content:center;font-size:46px;margin:0 auto;box-shadow:0 16px 36px -8px rgba(15,138,107,.5);animation:spring .5s cubic-bezier(.34,1.56,.64,1) both}
+.success-circle::before,.success-circle::after{content:'✨';position:absolute;font-size:18px;animation:fadeUp .6s .2s ease both}
+.success-wrap{position:relative;display:inline-block}
+
+/* === Hidden file inputs === */
+.hidden-input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+
+@media(min-width:1024px){
+  body{font-size:14px}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="overlay"></div>
+
+<script>
+/* ╔══════════════════════════════════════════════╗
+   ║   Class Fund v3.0 — Mint Money Design        ║
+   ║   ม.6/9 · โรงเรียนระยอง · 37 คน                ║
+   ╚══════════════════════════════════════════════╝ */
+
+// ── Constants ──
+const SUPABASE_URL = 'https://jqzptcqrmzqsifhitzxi.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxenB0Y3FybXpxc2lmaGl0enhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5NTY4NzksImV4cCI6MjA5NDUzMjg3OX0.BI7Izly2-2PymjTfiT7wyAsAv75sDUb9cvdmIZuhZMM';
+const ADMIN_PASS   = 'TtKk0814414064';
+const INIT_BALANCE = 7262;
+const CLAUDE_MODEL = 'claude-sonnet-4-5';
+const CLASS_NAME   = 'ม.6/9 · ระยอง';
+const ADMIN_NAME   = 'ตาต้า';
+const RECEIVER_NAME = 'นายนิติพัฒน์ ปัณราช';
+
+// ── Seed data ──
+const SEED_USERS = [
+  {id:'u1',  name:'นายกฤชพัฒน จ้อยกล้า',         nick:'กัปตัน',   pin:'40571'},
+  {id:'u2',  name:'นายคุณานนต์ ทองก้อน',          nick:'โต๋',      pin:'40590'},
+  {id:'u3',  name:'นายชัยชนะ เชียงเอม',           nick:'วินเนอร์', pin:'40607'},
+  {id:'u4',  name:'นายฌาน บุตรราช',               nick:'ฌาน',      pin:'40612'},
+  {id:'u5',  name:'นายณัฏฐชัย เดชาคณิต',          nick:'ต้นน้ำ',   pin:'40619'},
+  {id:'u6',  name:'นายธนกฤต หวานเสนาะ',           nick:'โชกุน',    pin:'40651'},
+  {id:'u7',  name:'นายธีรโชติ จิตจำนงค์',         nick:'เต้',      pin:'40663'},
+  {id:'u8',  name:'นายนิติพัฒน์ ปัณราช',          nick:'ตาต้า',    pin:'40674'},
+  {id:'u9',  name:'นายบุญยกร เจริญล้น',           nick:'อุล',      pin:'40679'},
+  {id:'u10', name:'นายพีรวิชญ์ ศิริภักดี',         nick:'ภีม',      pin:'40714'},
+  {id:'u11', name:'นายภีร์ม อนันตพรสกุล',         nick:'ภีร์ม',    pin:'40727'},
+  {id:'u12', name:'นายภูวิศ บัวทอง',              nick:'ตาม',      pin:'40741'},
+  {id:'u13', name:'นายวรวรรธน์ วงษ์กล้าหาญ',       nick:'กาย',      pin:'40760'},
+  {id:'u14', name:'นายวีรวัฒน์ แซ่กัง',           nick:'เอ็มเค',   pin:'40768'},
+  {id:'u15', name:'นายศิวกร สุขแสง',              nick:'ปอโต้',    pin:'40777'},
+  {id:'u16', name:'นายอนาคิน สุริยกุล ณ อยุธยา',   nick:'เป็นหนึ่ง',pin:'40797'},
+  {id:'u17', name:'นายนพวินท์ เครือฮวบ',          nick:'บุ๋น',     pin:'43417'},
+  {id:'u18', name:'นายปุญญพัฒน์ ปัญญาโชติ',        nick:'ปุญ',      pin:'43426'},
+  {id:'u19', name:'นายภูมิภัทร ต่ายทอง',          nick:'โอ๊ค',     pin:'43443'},
+  {id:'u20', name:'นายอัษฎา โลหะส่องแสง',         nick:'เอิร์ท',   pin:'43461'},
+  {id:'u21', name:'นางสาวกัลยรัตน์ ช่างแคน',      nick:'ข้าวฟ่าง', pin:'40820'},
+  {id:'u22', name:'นางสาวณชารีญา สุวรรณไพบูลย์',   nick:'แมงปอ',    pin:'40878'},
+  {id:'u23', name:'นางสาวณัฏฐณิชา ศิริผล',        nick:'โมสต์',    pin:'40891'},
+  {id:'u24', name:'นางสาวปณาลี หมอยาดี',          nick:'ปั้นหยา',  pin:'40955'},
+  {id:'u25', name:'นางสาวปณิตา สุวรรณวงศ์',       nick:'วุ้น',     pin:'40957'},
+  {id:'u26', name:'นางสาวปิยพัชญ์ ตรีเนตร',       nick:'แก้ม',     pin:'40982'},
+  {id:'u27', name:'นางสาวปุณณดา ขันทะเสน',        nick:'เนิ้ด',    pin:'40984'},
+  {id:'u28', name:'นางสาวภคพร บัวศรี',            nick:'แบม',      pin:'41022'},
+  {id:'u29', name:'นางสาวภคอร เลิศมงคล',          nick:'อิม',      pin:'41024'},
+  {id:'u30', name:'นางสาวภัควลัญชญ์ สมัญญาพรเลิศ', nick:'โลมา',     pin:'41029'},
+  {id:'u31', name:'นางสาวมีนา ชื่นฤดี',           nick:'มีน',      pin:'41036'},
+  {id:'u32', name:'นางสาววันพิเศษ นวลไทย',        nick:'เอิงเอย',  pin:'41058'},
+  {id:'u33', name:'นางสาวกรณ์ภัสสรณ์ พุทธานุรักษ์',nick:'นิชา',     pin:'41371'},
+  {id:'u34', name:'นางสาวคณาพร ตันติโกวิทย์',      nick:'นานา',     pin:'42140'},
+  {id:'u35', name:'นางสาวชุติกาญจน์ เดชโคบุตร',    nick:'เอิร์น',   pin:'43492'},
+  {id:'u36', name:'นางสาวบุณณดา เดชพันธุ์',       nick:'จูน',      pin:'43528'},
+  {id:'u37', name:'นางสาวสุนทรา ทองเรือง',        nick:'ฟ้าใส',    pin:'43592'},
+];
+const SEED_EXP = [
+  {id:'e1', name:'เก็บเงินเทอม 1/2569 📚',  amount:150, desc:'ค่าบำรุงห้องเรียน ภาคเรียนที่ 1 ปีการศึกษา 2569', at:Date.now()},
+  {id:'e2', name:'ค่าประกันอุบัติเหตุ 🛡️',  amount:400, desc:'คุ้มครองทั้งปีการศึกษา 2569', at:Date.now()+864e5},
+  {id:'e3', name:'ค่าเข็มขัดนักเรียน 🎓',  amount:60,  desc:'เข็มขัดประจำห้อง', at:Date.now()+2*864e5},
+];
+
+// ── Device detection (set once, no resize) ──
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 900;
+
+// ── Supabase ──
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ── State ──
+let STATE = {
+  users: [], expenses: [], payments: [],
+  qr: null, savedBalance: INIT_BALANCE,
+  session: null,           // {role:'user'|'admin', uid?: string}
+  route: location.hash || '#/',
+  loading: true,
+  toast: null,
+  // pay wizard
+  payStep: 1, paySelected: [], paySlip: null,
+  // ui state
+  lbMode: 'fast', editMbId: null, slipZoom: null,
+  loginStage: 'welcome',   // welcome | choose | pin | admin
+  loginQuery: '',
+  pickedUid: null,
+  pinBuf: '',
+  rememberUid: localStorage.getItem('cf_uid') || null,
+  aiKey: sessionStorage.getItem('cf_ai_key') || '',
+  aiRunning: false,
+};
+
+function setState(upd) { STATE = {...STATE, ...upd}; render(); }
+
+// ── Helpers ──
+const thb = n => `฿${Number(n||0).toLocaleString('en-US')}`;
+const thbb = n => `${Number(n||0).toLocaleString('en-US')}`;
+const stripPrefix = s => (s||'').replace(/^(นาย|นางสาว)/,'');
+const firstName = s => stripPrefix(s).split(' ')[0];
+const initial = s => stripPrefix(s).charAt(0) || '·';
+const fmtDate = ts => new Date(ts).toLocaleDateString('th-TH',{day:'numeric',month:'short'});
+const fmtDateLong = ts => new Date(ts).toLocaleDateString('th-TH',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+const sortUsersById = us => [...us].sort((a,b)=>parseInt(a.id.replace(/\D/g,''))-parseInt(b.id.replace(/\D/g,'')));
+const esc = s => String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function calcBoard(users, pays) {
+  return users.map(u => {
+    const ok = pays.filter(p => p.uid===u.id && p.status==='verified');
+    const first = ok.length ? Math.min(...ok.map(p=>p.paidAt)) : Infinity;
+    return {...u, cnt: ok.length, first, score: ok.length*1e13 - first};
+  }).sort((a,b)=>b.score-a.score);
+}
+function avatarHtml(name, size=40, tone='mint') {
+  const tones = {
+    mint:{bg:'#E8F5EF',fg:'#0A6B53'},
+    gold:{bg:'#FEF3D6',fg:'#D69A1F'},
+    cream:{bg:'#F4EFE0',fg:'#3F524C'},
+  };
+  const t = tones[tone]||tones.mint;
+  return `<span class="av" style="width:${size}px;height:${size}px;background:${t.bg};color:${t.fg};font-size:${size*.42}px">${esc(initial(name))}</span>`;
+}
+function totalTarget(){ return STATE.users.length * STATE.expenses.reduce((s,e)=>s+e.amount,0); }
+function totalVerified(){
+  return STATE.payments.filter(p=>p.status==='verified').reduce((s,p)=>{const e=STATE.expenses.find(x=>x.id===p.eid);return s+(e?.amount||0)},0);
+}
+function pendingPays(){ return STATE.payments.filter(p=>p.status==='pending'); }
+
+// ── Toast ──
+let _toastTimer = null;
+function showToast(msg, type='info') {
+  STATE.toast = {msg, type};
+  if (_toastTimer) clearTimeout(_toastTimer);
+  paintToast();
+  _toastTimer = setTimeout(()=>{ STATE.toast=null; paintToast(); }, 2800);
+}
+function paintToast() {
+  const o = document.getElementById('overlay');
+  let extra = '';
+  if (STATE.slipZoom) {
+    extra += `<div id="slipZoom" onclick="closeSlipZoom()"><img src="${STATE.slipZoom}"/></div>`;
+  }
+  let toastHtml = '';
+  if (STATE.toast) {
+    toastHtml = `<div id="toast" class="${esc(STATE.toast.type)}">${esc(STATE.toast.msg)}</div>`;
+  }
+  o.innerHTML = extra + toastHtml;
+}
+function openSlipZoom(src){ STATE.slipZoom = src; paintToast(); }
+function closeSlipZoom(){ STATE.slipZoom = null; paintToast(); }
+
+// ── Data layer ──
+async function loadAll() {
+  try {
+    const [uRes, eRes, pRes, cRes] = await Promise.all([
+      db.from('users').select('*').order('id'),
+      db.from('expenses').select('*').order('at'),
+      db.from('payments').select('*').order('paid_at'),
+      db.from('config').select('*'),
+    ]);
+    if (uRes.error || eRes.error) {
+      console.error('Load error:', uRes.error || eRes.error);
+      return false;
+    }
+    if (!uRes.data.length) {
+      await db.from('users').insert(SEED_USERS);
+      STATE.users = SEED_USERS;
+    } else STATE.users = uRes.data;
+    if (!eRes.data.length) {
+      await db.from('expenses').insert(SEED_EXP.map(e=>({id:e.id,name:e.name,amount:e.amount,desc:e.desc,at:e.at})));
+      STATE.expenses = SEED_EXP;
+    } else {
+      // Insert any SEED items that don't exist yet (handles older DBs missing items)
+      const existingIds = new Set(eRes.data.map(e=>e.id));
+      const missing = SEED_EXP.filter(e => !existingIds.has(e.id));
+      if (missing.length) {
+        await db.from('expenses').insert(missing.map(e=>({id:e.id,name:e.name,amount:e.amount,desc:e.desc,at:e.at})));
+        STATE.expenses = [...eRes.data, ...missing].sort((a,b)=>(a.at||0)-(b.at||0));
+      } else {
+        STATE.expenses = eRes.data;
+      }
+    }
+    STATE.payments = (pRes.data||[]).map(p => ({...p, paidAt: p.paid_at}));
+    const cfgs = cRes.data || [];
+    const qrRow = cfgs.find(r => r.key==='qr');
+    const balRow = cfgs.find(r => r.key==='savedBalance');
+    if (qrRow?.value) STATE.qr = qrRow.value;
+    if (balRow?.value) STATE.savedBalance = +balRow.value;
+    return true;
+  } catch(err) {
+    console.error('loadAll error', err);
+    return false;
+  }
+}
+
+function subscribeRealtime() {
+  db.channel('class_fund')
+    .on('postgres_changes', {event:'*', schema:'public', table:'payments'}, async () => {
+      const {data} = await db.from('payments').select('*').order('paid_at');
+      STATE.payments = (data||[]).map(p=>({...p,paidAt:p.paid_at}));
+      render();
+    })
+    .on('postgres_changes', {event:'*', schema:'public', table:'expenses'}, async () => {
+      const {data} = await db.from('expenses').select('*').order('at');
+      STATE.expenses = data||[];
+      render();
+    })
+    .on('postgres_changes', {event:'*', schema:'public', table:'users'}, async () => {
+      const {data} = await db.from('users').select('*').order('id');
+      STATE.users = data||[];
+      render();
+    })
+    .subscribe();
+}
+
+async function initApp() {
+  STATE.loading = true; render();
+  const ok = await loadAll();
+  if (!ok) {
+    document.getElementById('app').innerHTML = `
+      <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px">
+        <div class="card" style="padding:36px;max-width:420px;text-align:center">
+          <div style="font-size:48px;margin-bottom:12px">⚠️</div>
+          <h2 class="h2" style="margin-bottom:10px">เชื่อมต่อ Supabase ไม่ได้</h2>
+          <p style="font-size:13px;color:var(--ink-3);line-height:1.7">ลองรีเฟรชหน้าใหม่ หรือเช็คการเชื่อมต่ออินเทอร์เน็ต</p>
+        </div>
+      </div>`;
+    return;
+  }
+  STATE.loading = false;
+  subscribeRealtime();
+  // Hash routing
+  window.addEventListener('hashchange', () => { STATE.route = location.hash || '#/'; render(); });
+  render();
+}
+
+// ── Router helpers ──
+function navigate(hash) {
+  location.hash = hash;
+}
+function logout() {
+  const wasAdmin = STATE.session?.role === 'admin';
+  STATE.session = null;
+  STATE.loginStage = 'welcome';
+  STATE.pickedUid = null;
+  STATE.pinBuf = '';
+  STATE.payStep = 1;
+  STATE.paySelected = [];
+  STATE.paySlip = null;
+  STATE.selectedSlipId = null;
+  if (wasAdmin) {
+    sessionStorage.removeItem('cf_ai_key');
+    STATE.aiKey = '';
+  }
+  navigate('#/');
+}
+
+// ── AI Verify (admin only, sessionStorage key) ──
+function slipHash(dataUrl) {
+  // Simple non-cryptographic hash for dedup
+  let h = 0;
+  const s = dataUrl || '';
+  for (let i=0; i<s.length; i+=53) h = ((h<<5) - h + s.charCodeAt(i))|0;
+  return String(h);
+}
+
+async function callClaudeVerify(slipDataUrl, expense) {
+  const key = STATE.aiKey;
+  if (!key) return null;
+  // Extract mime + base64
+  const m = (slipDataUrl||'').match(/^data:(image\/[^;]+);base64,(.+)$/);
+  if (!m) return null;
+  const mediaType = m[1];
+  const data = m[2];
+  const prompt = `คุณคือ AI ตรวจสลิปโอนเงินของห้องเรียน
+รายการที่ผู้ใช้แจ้งจ่าย: ${expense.name} จำนวน ${expense.amount} บาท
+ผู้รับเงิน: ${RECEIVER_NAME}
+
+ตรวจ:
+1. is_slip — เป็นภาพสลิปธนาคาร/พร้อมเพย์จริงไหม
+2. amount_ok — ยอดเงินในสลิปเท่ากับ ${expense.amount} บาทหรือไม่
+3. recipient_ok — ผู้รับคือ "${RECEIVER_NAME}" ใช่ไหม
+4. date_ok — วันที่/เวลาบนสลิปสมเหตุสมผลไหม (วันนี้หรือก่อนหน้าไม่กี่วัน)
+5. verdict — likely_real / suspicious / fake
+6. confidence — 0-100
+7. issues — array ของปัญหา (ไทย)
+8. note — สรุปสั้นๆ ไทย
+
+ตอบเป็น JSON ล้วนๆ ห้ามมี markdown:
+{"verdict":"...","confidence":0,"amount_ok":null,"recipient_ok":null,"date_ok":null,"is_slip":true,"issues":[],"note":""}`;
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: CLAUDE_MODEL,
+        max_tokens: 600,
+        messages: [{
+          role: 'user',
+          content: [
+            {type:'image', source:{type:'base64', media_type:mediaType, data}},
+            {type:'text', text: prompt},
+          ],
+        }],
+      }),
+    });
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error('Claude API error:', res.status, errText);
+      return {verdict:'suspicious', confidence:0, note:'AI ตรวจไม่ได้ (API error '+res.status+')', issues:[]};
+    }
+    const j = await res.json();
+    const txt = j?.content?.[0]?.text || '';
+    const match = txt.match(/\{[\s\S]*\}/);
+    if (!match) return null;
+    return JSON.parse(match[0]);
+  } catch (err) {
+    console.error('Claude call failed', err);
+    return null;
+  }
+}
+
+async function runAiOnPending() {
+  if (!STATE.aiKey || STATE.aiRunning) return;
+  const queue = STATE.payments.filter(p => p.status==='pending' && !p.ai_verdict && p.slip);
+  if (!queue.length) return;
+  STATE.aiRunning = true;
+  for (const p of queue) {
+    const e = STATE.expenses.find(x => x.id===p.eid);
+    if (!e) continue;
+    const result = await callClaudeVerify(p.slip, e);
+    if (result) {
+      const update = {
+        ai_verdict: result.verdict || 'suspicious',
+        ai_confidence: typeof result.confidence==='number'?result.confidence:null,
+        ai_note: result.note || '',
+        ai_issues: result.issues || [],
+      };
+      STATE.payments = STATE.payments.map(x => x.id===p.id ? {...x, ...update} : x);
+      await db.from('payments').update(update).eq('id', p.id);
+      render();
+    }
+  }
+  STATE.aiRunning = false;
+  render();
+}
+
+// ── Actions ──
+async function addExp() {
+  const name = document.getElementById('ex-name')?.value?.trim();
+  const amt = +document.getElementById('ex-amt')?.value;
+  const desc = document.getElementById('ex-desc')?.value?.trim() || '';
+  if (!name || !amt) { showToast('กรอกชื่อรายการและจำนวนเงิน','warn'); return; }
+  const e = {id:'e'+Date.now(), name, amount:amt, desc, at:Date.now()};
+  STATE.expenses = [...STATE.expenses, e]; render();
+  await db.from('expenses').insert(e);
+  showToast('เพิ่มรายการแล้ว ✅','success');
+}
+async function delExp(id) {
+  if (!confirm('ลบรายการนี้?')) return;
+  STATE.expenses = STATE.expenses.filter(e=>e.id!==id); render();
+  await db.from('expenses').delete().eq('id', id);
+  showToast('ลบแล้ว','info');
+}
+async function addUser() {
+  const name = document.getElementById('mb-name')?.value?.trim();
+  const nick = document.getElementById('mb-nick')?.value?.trim() || '';
+  const pin = document.getElementById('mb-pin')?.value?.trim() || '';
+  if (!name) { showToast('กรอกชื่อ','warn'); return; }
+  const u = {id:'u'+Date.now(), name, nick, pin};
+  STATE.users = [...STATE.users, u]; render();
+  await db.from('users').insert(u);
+  showToast('เพิ่มสมาชิกแล้ว ✅','success');
+}
+async function saveEditUser(id) {
+  const name = document.getElementById('edit-name-'+id)?.value?.trim();
+  const nick = document.getElementById('edit-nick-'+id)?.value?.trim() || '';
+  const pin = document.getElementById('edit-pin-'+id)?.value?.trim() || '';
+  if (!name) return;
+  STATE.users = STATE.users.map(u => u.id===id ? {...u, name, nick, pin} : u);
+  STATE.editMbId = null; render();
+  await db.from('users').update({name, nick, pin}).eq('id', id);
+  showToast('บันทึกแล้ว','success');
+}
+async function delUser(id) {
+  if (!confirm('ลบสมาชิกนี้?')) return;
+  STATE.users = STATE.users.filter(u=>u.id!==id);
+  STATE.payments = STATE.payments.filter(p=>p.uid!==id);
+  render();
+  await db.from('payments').delete().eq('uid', id);
+  await db.from('users').delete().eq('id', id);
+  showToast('ลบสมาชิกแล้ว','info');
+}
+async function resetUserPay(id) {
+  if (!confirm('ล้างประวัติการจ่ายของสมาชิกนี้?')) return;
+  STATE.payments = STATE.payments.filter(p=>p.uid!==id);
+  STATE.editMbId = null; render();
+  await db.from('payments').delete().eq('uid', id);
+  showToast('ล้างข้อมูลแล้ว ✅','success');
+}
+async function approvePayment(id) {
+  STATE.payments = STATE.payments.map(p=>p.id===id?{...p,status:'verified'}:p); render();
+  await db.from('payments').update({status:'verified'}).eq('id', id);
+  showToast('อนุมัติแล้ว ✅','success');
+}
+async function batchApprove(ids) {
+  if (!ids?.length) return;
+  STATE.payments = STATE.payments.map(p => ids.includes(p.id) ? {...p,status:'verified'} : p); render();
+  for (const id of ids) {
+    await db.from('payments').update({status:'verified'}).eq('id', id);
+  }
+  showToast(`อนุมัติ ${ids.length} รายการ ✅`,'success');
+}
+async function rejectPayment(id) {
+  if (!confirm('ปฏิเสธสลิปนี้?')) return;
+  STATE.payments = STATE.payments.filter(p=>p.id!==id); render();
+  await db.from('payments').delete().eq('id', id);
+  showToast('ปฏิเสธแล้ว','warn');
+}
+function clearQR() {
+  if (!confirm('ลบ QR Code?')) return;
+  STATE.qr = null; render();
+  db.from('config').upsert({key:'qr', value:''});
+}
+function uploadQR(input) {
+  const f = input.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = async ev => {
+    STATE.qr = ev.target.result; render();
+    await db.from('config').upsert({key:'qr', value: ev.target.result});
+    showToast('อัปโหลด QR แล้ว ✅','success');
+  };
+  r.readAsDataURL(f);
+}
+function uploadSlip(input) {
+  const f = input.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = ev => { STATE.paySlip = ev.target.result; render(); };
+  r.readAsDataURL(f);
+}
+function togglePaySelect(eid) {
+  const has = STATE.paySelected.includes(eid);
+  STATE.paySelected = has ? STATE.paySelected.filter(x=>x!==eid) : [...STATE.paySelected, eid];
+  render();
+}
+function selectAllUnpaid() {
+  if (!STATE.session?.uid) return;
+  const uid = STATE.session.uid;
+  const unpaid = STATE.expenses.filter(e => !STATE.payments.find(p => p.uid===uid && p.eid===e.id));
+  STATE.paySelected = unpaid.map(e=>e.id);
+  render();
+}
+async function submitPay() {
+  const uid = STATE.session?.uid;
+  if (!uid || !STATE.paySelected.length || !STATE.paySlip) return;
+  const slip = STATE.paySlip;
+  const ids = STATE.paySelected;
+  // Insert one payment row per selected expense
+  const rows = ids.map((eid, i) => ({
+    id: 'p'+Date.now()+'_'+i,
+    uid,
+    eid,
+    status: 'pending',
+    paidAt: Date.now(),
+    paid_at: Date.now(),
+    slip,
+  }));
+  STATE.payments = [...STATE.payments, ...rows];
+  STATE.payStep = 3;
+  render();
+  await db.from('payments').insert(rows.map(r => ({
+    id: r.id, uid: r.uid, eid: r.eid, status: r.status,
+    paid_at: r.paid_at, slip: r.slip,
+  })));
+}
+async function updateBal() {
+  const v = +document.getElementById('bal-inp')?.value;
+  if (isNaN(v) || v < 0) return;
+  STATE.savedBalance = v; render();
+  await db.from('config').upsert({key:'savedBalance', value: String(v)});
+  showToast('บันทึกยอดเงินแล้ว ✅','success');
+}
+function saveAiKey() {
+  const v = document.getElementById('ai-key-inp')?.value?.trim() || '';
+  STATE.aiKey = v;
+  if (v) sessionStorage.setItem('cf_ai_key', v);
+  else sessionStorage.removeItem('cf_ai_key');
+  showToast(v ? 'บันทึก Claude API key ✅' : 'ลบ key แล้ว','info');
+  render();
+  if (v) runAiOnPending();
+}
+
+function startPayWizard() {
+  STATE.payStep = 1;
+  STATE.paySelected = [];
+  STATE.paySlip = null;
+  navigate('#/u/pay');
+}
+function pwNext() {
+  if (STATE.payStep===1) {
+    if (!STATE.paySelected.length) { showToast('เลือกอย่างน้อย 1 รายการ','warn'); return; }
+    STATE.payStep = 2; render();
+  } else if (STATE.payStep===2) {
+    if (!STATE.paySlip) { showToast('แนบสลิปก่อน','warn'); return; }
+    submitPay();
+  }
+}
+function pwBack() {
+  if (STATE.payStep === 2) { STATE.payStep = 1; render(); }
+  else if (STATE.payStep === 1) navigate('#/u/home');
+  else if (STATE.payStep === 3) { STATE.payStep = 1; STATE.paySelected = []; STATE.paySlip = null; navigate('#/u/home'); }
+}
+
+// ── PIN numpad (use direct DOM update to avoid re-rendering whole screen, fixes name-card bouncing) ──
+function pinPress(d) {
+  if (STATE.pinBuf.length >= 5) return;
+  STATE.pinBuf += String(d);
+  updatePinDotsDOM();
+  if (STATE.pinBuf.length === 5) setTimeout(tryPinLogin, 180);
+}
+function pinBack() {
+  if (!STATE.pinBuf) return;
+  STATE.pinBuf = STATE.pinBuf.slice(0,-1);
+  updatePinDotsDOM();
+}
+function pinClear() {
+  STATE.pinBuf = '';
+  updatePinDotsDOM();
+}
+function updatePinDotsDOM() {
+  document.querySelectorAll('.pin-dots > div').forEach((dot, i) => {
+    if (i < STATE.pinBuf.length) dot.classList.add('f');
+    else dot.classList.remove('f');
+  });
+}
+function tryPinLogin() {
+  const u = STATE.users.find(x => x.id === STATE.pickedUid);
+  if (!u) return;
+  if (u.pin && u.pin !== STATE.pinBuf) {
+    showToast('รหัสนักเรียนไม่ถูก','error');
+    STATE.pinBuf = '';
+    render();
+    return;
+  }
+  localStorage.setItem('cf_uid', u.id);
+  STATE.session = {role:'user', uid:u.id};
+  STATE.rememberUid = u.id;
+  STATE.pinBuf = '';
+  navigate('#/u/home');
+}
+function quickLogin() {
+  const u = STATE.users.find(x => x.id === STATE.rememberUid);
+  if (!u) return;
+  STATE.pickedUid = u.id;
+  STATE.loginStage = 'pin';
+  STATE.pinBuf = '';
+  render();
+}
+function tryAdminLogin() {
+  const pw = document.getElementById('adm-pw')?.value || '';
+  if (pw === ADMIN_PASS) {
+    const k = document.getElementById('adm-key')?.value?.trim() || '';
+    if (k) {
+      STATE.aiKey = k;
+      sessionStorage.setItem('cf_ai_key', k);
+    }
+    STATE.session = {role:'admin'};
+    navigate('#/a/ov');
+    setTimeout(()=>runAiOnPending(), 400);
+  } else {
+    showToast('รหัสผ่านไม่ถูก','error');
+  }
+}
+
+// ── Icons (inline SVG) ──
+const ICO = {
+  home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg>',
+  send: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>',
+  chart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 3 5-6"/></svg>',
+  trophy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0V4z"/><path d="M5 4H3v3a3 3 0 003 3M19 4h2v3a3 3 0 01-3 3"/></svg>',
+  back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>',
+  fwd: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>',
+  close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4 4L19 6"/></svg>',
+  search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>',
+  user: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>',
+  crown: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l4 4 5-7 5 7 4-4-2 12H5L3 7z"/><path d="M5 19h14"/></svg>',
+  upload: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>',
+  wallet: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7H5a2 2 0 00-2 2v8a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2z"/><path d="M16 14a1 1 0 100-2 1 1 0 000 2z" fill="currentColor"/><path d="M3 9V6a2 2 0 012-2h11"/></svg>',
+  settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>',
+  receipt: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l3-2 3 2 3-2 3 2 3-2V2H4z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
+  users: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>',
+  qr: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM18 18h3v3h-3z"/></svg>',
+  cash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M6 12h.01M18 12h.01"/></svg>',
+};
+function svgIcon(name, size=20, color='currentColor') {
+  return `<span style="display:inline-flex;width:${size}px;height:${size}px;color:${color}">${ICO[name]||''}</span>`;
+}
+
+// ── Expense-specific icons (rendered in colored circle chips) ──
+const ICO_EXP = {
+  money:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2.5"/><circle cx="12" cy="12" r="3"/><path d="M6 12h.5M17.5 12h.5"/></svg>',
+  shield:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>',
+  gradcap: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10L12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5"/></svg>',
+  gift:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13M3 13h18M7.5 8a2.5 2.5 0 010-5C9 3 10 4 12 8c2-4 3-5 4.5-5a2.5 2.5 0 010 5"/></svg>',
+};
+function expenseMeta(name) {
+  const s = name || '';
+  if (/ประกัน|🛡/.test(s)) return {ico:'shield',  bg:'rgba(31,61,112,.10)',  fg:'#1F3D70'};
+  if (/เข็มขัด|🎓/.test(s)) return {ico:'gradcap', bg:'rgba(10,107,83,.12)',   fg:'#0A6B53'};
+  if (/เทอม|ห้อง|📚/.test(s)) return {ico:'money',  bg:'rgba(245,182,56,.16)',  fg:'#D69A1F'};
+  return {ico:'gift', bg:'rgba(167,139,250,.14)', fg:'#7C3AED'};
+}
+function expIconChip(name, size=42) {
+  const m = expenseMeta(name);
+  const r = Math.round(size*0.30);
+  const s = Math.round(size*0.52);
+  // Inject explicit width/height so SVG renders at correct size in all browsers
+  const svg = (ICO_EXP[m.ico]||ICO_EXP['gift']).replace('<svg ', `<svg width="${s}" height="${s}" `);
+  return `<div style="width:${size}px;height:${size}px;border-radius:${r}px;background:${m.bg};color:${m.fg};display:flex;align-items:center;justify-content:center;flex-shrink:0">${svg}</div>`;
+}
+
+// ── Animated count-up (driven by data-count + data-ckey on any element) ──
+const COUNT_CACHE = {};
+function cnum(n, key) {
+  return `<span data-count="${Number(n||0)}" data-ckey="${esc(key)}">${Number(n||0).toLocaleString('en-US')}</span>`;
+}
+function paintCountUps() {
+  document.querySelectorAll('[data-count][data-ckey]').forEach(el => {
+    const target = +el.dataset.count;
+    if (!Number.isFinite(target)) return;
+    const key = el.dataset.ckey;
+    const prev = COUNT_CACHE[key];
+    if (prev === target) { el.textContent = target.toLocaleString('en-US'); return; }
+    const from = (typeof prev === 'number') ? prev : 0;
+    COUNT_CACHE[key] = target;
+    const t0 = performance.now();
+    const dur = 700;
+    (function tick(t){
+      const p = Math.min(1, (t - t0) / dur);
+      const eased = 1 - Math.pow(1 - p, 3);
+      const v = Math.round(from + (target - from) * eased);
+      el.textContent = v.toLocaleString('en-US');
+      if (p < 1) requestAnimationFrame(tick);
+    })(performance.now());
+  });
+}
+
+// ============================================================
+// === RENDER DISPATCHER ======================================
+// ============================================================
+function render() {
+  const app = document.getElementById('app');
+  if (STATE.loading) {
+    app.innerHTML = renderLoading();
+    paintToast();
+    return;
+  }
+  let html;
+  const r = STATE.route;
+  if (!STATE.session) {
+    html = renderLoginRoot();
+  } else if (STATE.session.role === 'admin') {
+    html = isMobile ? renderMobileAdmin() : renderDesktopAdmin();
+  } else {
+    html = isMobile ? renderMobileUser() : renderDesktopUser();
+  }
+  app.innerHTML = html;
+  paintToast();
+  paintCountUps();
+  // Auto-focus AI on admin verify when key exists
+  if (STATE.session?.role==='admin' && STATE.route==='#/a/vr' && STATE.aiKey && !STATE.aiRunning) {
+    setTimeout(runAiOnPending, 200);
+  }
+}
+
+function renderLoading() {
+  return `<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px">
+    <div style="font-size:48px;animation:fadeUp .5s ease both">🏦</div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:800;letter-spacing:2.4px;background:linear-gradient(135deg,#0F8A6B,#0A6B53);-webkit-background-clip:text;-webkit-text-fill-color:transparent">CLASS FUND</div>
+    <div style="display:flex;gap:6px">
+      ${[0,1,2].map(i=>`<div style="width:7px;height:7px;border-radius:50%;background:var(--primary);animation:pulseSoft 1.2s ease-in-out ${i*.2}s infinite"></div>`).join('')}
+    </div>
+  </div>`;
+}
+
+// === Stub render functions, filled by Edit ops below ===
+function renderLoginRoot() {
+  const stage = STATE.loginStage || 'welcome';
+  if (stage === 'pickRole') return renderPickRole();
+  if (stage === 'choose') return renderChooseStudent();
+  if (stage === 'pin') return renderPinScreen();
+  if (stage === 'admin') return renderAdminLogin();
+  return renderWelcome();
+}
+
+function renderWelcome() {
+  const avatars = ['#FFD8A8','#A8D8C2','#F2C9D0','#C9D0F2','#FFE8B0']
+    .map((c,i)=>`<span style="width:22px;height:22px;border-radius:50%;background:${c};border:2.5px solid #0A6B53;margin-left:${i>0?-7:0}px;display:inline-block"></span>`).join('');
+  return `<div style="min-height:100vh;display:flex;flex-direction:column;justify-content:space-between;padding:18px 16px calc(20px + env(safe-area-inset-bottom));padding-top:max(18px,env(safe-area-inset-top))">
+    <div style="width:100%;max-width:440px;margin:0 auto;flex:1;display:flex;flex-direction:column">
+      <!-- Hero mint card takes most of viewport -->
+      <div class="hero-mint fade-up" style="padding:28px 24px 22px;flex:1;display:flex;flex-direction:column;justify-content:space-between;min-height:560px">
+        <div>
+          <div style="position:relative;display:flex;align-items:center;gap:11px">
+            <div style="width:40px;height:40px;border-radius:12px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.28);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0">🏦</div>
+            <div style="min-width:0">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;letter-spacing:2px">CLASS FUND</div>
+              <div style="font-size:11px;opacity:.78;margin-top:1px">${esc(CLASS_NAME)}</div>
+            </div>
+          </div>
+          <h1 style="position:relative;font-size:28px;font-weight:700;line-height:1.2;letter-spacing:-.4px;margin:28px 0 0">
+            ระบบเก็บเงินห้อง<br>ผ่าน <span style="color:#F5B638">Web apps 2.0</span>
+          </h1>
+          <p style="position:relative;font-size:13px;opacity:.82;line-height:1.55;margin:10px 0 0;max-width:280px">จ่ายผ่านพร้อมเพย์ · แนบสลิป · ทุกคนเห็นยอดเงินจริง</p>
+        </div>
+
+        <div>
+          <div class="glass-row" style="position:relative;padding:16px 18px;margin-bottom:18px">
+            <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;opacity:.85;margin-bottom:4px;gap:8px">
+              <span>ยอดสะสมห้องเรา</span>
+              <span class="pill pill-ghost" style="font-size:10px">ยกมา ปี 68</span>
+            </div>
+            <div class="num-hero">
+              <span style="font-size:24px;font-weight:500;margin-right:3px;opacity:.85">฿</span>${cnum(STATE.savedBalance,'welcome-saved')}
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;margin-top:12px;padding-top:11px;border-top:1px solid rgba(255,255,255,.16)">
+              <div style="display:inline-flex">${avatars}</div>
+              <span style="font-size:12px;opacity:.92"><b class="num">${STATE.users.length}</b> คนรวมเงินกัน</span>
+            </div>
+          </div>
+          <button class="btn" style="width:100%;padding:15px;background:#fff;color:var(--ink);font-weight:700;font-size:15px;box-shadow:0 8px 20px rgba(0,0,0,.18)" onclick="setState({loginStage:'pickRole'})">
+            เข้าสู่ระบบ ${svgIcon('fwd',16)}
+          </button>
+        </div>
+      </div>
+
+      <div style="text-align:center;font-size:11px;color:var(--ink-3);margin-top:14px">
+        เหรัญญิก · <b style="color:var(--ink-2)">${esc(ADMIN_NAME)} (นิติพัฒน์)</b>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderPickRole() {
+  const remembered = STATE.rememberUid ? STATE.users.find(u=>u.id===STATE.rememberUid) : null;
+  return `<div style="min-height:100vh;display:flex;flex-direction:column;padding:14px 16px calc(20px + env(safe-area-inset-bottom));padding-top:max(14px,env(safe-area-inset-top))">
+    <div style="width:100%;max-width:440px;margin:0 auto;flex:1;display:flex;flex-direction:column">
+      <div style="margin-bottom:14px">
+        <button class="btn-g" style="width:36px;height:36px;padding:0;border-radius:10px;display:flex;align-items:center;justify-content:center" onclick="setState({loginStage:'welcome'})">${svgIcon('back',18)}</button>
+      </div>
+      <div class="fade-up" style="margin-bottom:18px">
+        <span class="pill pill-mint" style="margin-bottom:14px">👋 ยินดีต้อนรับกลับ</span>
+        <h1 class="h1" style="margin-top:14px">คุณเข้าระบบ<br>ในฐานะใคร?</h1>
+        <p style="font-size:13px;color:var(--ink-3);margin-top:8px;line-height:1.55">เลือกบทบาท เพื่อเข้าหน้าจอที่เหมาะกับคุณ</p>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:12px;flex:1">
+        <!-- BIG green นักเรียน card -->
+        <button class="hero-mint fade-up" style="padding:22px;text-align:left;cursor:pointer;border:none;width:100%;color:#fff" onclick="setState({loginStage:'choose',loginQuery:''})">
+          <div style="position:relative;display:flex;align-items:flex-start;gap:14px">
+            <div style="width:52px;height:52px;border-radius:15px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.28);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0">🎓</div>
+            <div style="flex:1;min-width:0;padding-right:28px">
+              <div style="font-weight:700;font-size:20px;letter-spacing:-.2px">นักเรียน</div>
+              <div style="font-size:13px;opacity:.85;margin-top:4px;line-height:1.5">เช็คสถานะ · จ่ายเงิน · ดูอันดับ</div>
+              <div style="display:flex;gap:6px;margin-top:14px;flex-wrap:wrap">
+                <span class="pill pill-ghost" style="font-size:11px;padding:4px 10px">${STATE.users.length} คน</span>
+                <span class="pill pill-ghost" style="font-size:11px;padding:4px 10px">ใช้รหัส 5 หลัก</span>
+              </div>
+            </div>
+            <div style="position:absolute;right:0;top:50%;transform:translateY(-50%);color:#fff;opacity:.85">${svgIcon('fwd',22)}</div>
+          </div>
+        </button>
+
+        <!-- Smaller Admin card -->
+        <button class="card fade-up" style="padding:16px 18px;text-align:left;display:flex;align-items:center;gap:14px;width:100%;cursor:pointer" onclick="setState({loginStage:'admin'})">
+          <div style="width:44px;height:44px;border-radius:13px;background:var(--accent-tint);border:1px solid rgba(245,182,56,.32);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">👑</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:700;font-size:15px">Admin <span style="color:var(--ink-3);font-weight:400">(เหรัญญิก)</span></div>
+            <div style="font-size:12px;color:var(--ink-3);margin-top:2px">จัดการรายการ · ตรวจสลิป</div>
+          </div>
+          <span style="color:var(--ink-3)">${svgIcon('fwd',18)}</span>
+        </button>
+      </div>
+
+      ${remembered ? `<div class="card fade-up" style="padding:11px 14px;display:flex;align-items:center;gap:12px;border-style:dashed;border-color:rgba(15,138,107,.35);background:rgba(15,138,107,.04);margin-top:18px">
+        ${avatarHtml(remembered.name, 38, 'mint')}
+        <div style="flex:1;min-width:0">
+          <div style="font-size:11px;color:var(--primary-deep);font-weight:600;letter-spacing:.3px">เข้าล่าสุด</div>
+          <div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(remembered.nick || stripPrefix(remembered.name))} · ${esc(stripPrefix(remembered.name).split(' ').slice(0,1).join(' '))}</div>
+        </div>
+        <button class="btn btn-p" style="padding:7px 14px;font-size:12px" onclick="quickLogin()">เข้าด่วน</button>
+      </div>` : ''}
+    </div>
+  </div>`;
+}
+
+// Avatar color palette — different tones per index
+const AV_TONES = [
+  {bg:'#E8F5EF',fg:'#0A6B53'},{bg:'#FEF3D6',fg:'#D69A1F'},{bg:'#FBE6E7',fg:'#A82B33'},
+  {bg:'#E8EEF7',fg:'#1F3D70'},{bg:'#F0E8FF',fg:'#7C3AED'},{bg:'#FFF0E6',fg:'#C2450A'},
+  {bg:'#E6F4FF',fg:'#0369A1'},{bg:'#F0FFF4',fg:'#166534'},{bg:'#FFF5F5',fg:'#9B1C1C'},
+];
+function avTone(idx){ return AV_TONES[idx % AV_TONES.length]; }
+
+function renderChooseStudent() {
+  const q = (STATE.loginQuery||'').toLowerCase();
+  const all = sortUsersById(STATE.users);
+  const filtered = all.filter(u =>
+    !q || stripPrefix(u.name).toLowerCase().includes(q) ||
+    (u.nick||'').toLowerCase().includes(q)
+    // NOTE: ไม่ search ด้วย PIN — รักษาความเป็นส่วนตัว
+  );
+  const picked = STATE.pickedUid ? STATE.users.find(u=>u.id===STATE.pickedUid) : null;
+  const pickedIdx = picked ? all.findIndex(u=>u.id===picked.id) : -1;
+  const tone = pickedIdx>=0 ? avTone(pickedIdx) : AV_TONES[0];
+
+  return `<div style="min-height:100vh;display:flex;flex-direction:column;padding-bottom:${picked?'96px':'20px'}">
+    <!-- Top bar -->
+    <div style="padding:14px 16px;padding-top:max(14px,env(safe-area-inset-top));display:flex;align-items:center;gap:12px;background:rgba(250,248,242,.95);backdrop-filter:blur(14px);position:sticky;top:0;z-index:20;border-bottom:1px solid var(--border)">
+      <button style="width:36px;height:36px;padding:0;border-radius:10px;background:#fff;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer" onclick="setState({loginStage:'pickRole',pickedUid:null})">${svgIcon('back',18)}</button>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:11px;color:var(--primary-deep);font-weight:600;letter-spacing:.3px">ขั้นตอนที่ 1/2</div>
+        <div style="font-size:16px;font-weight:700;letter-spacing:-.2px;margin-top:1px">เลือกชื่อของคุณ</div>
+      </div>
+      <span class="pill pill-mint" style="font-size:11px;padding:4px 10px">${STATE.users.length} คน</span>
+    </div>
+
+    <!-- Search bar -->
+    <div style="padding:12px 16px 8px;background:rgba(250,248,242,.95)">
+      <div style="position:relative">
+        <span style="position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--ink-3);pointer-events:none">${svgIcon('search',16)}</span>
+        <input id="usr-q" placeholder="ค้นหาชื่อ หรือ ชื่อเล่น..." value="${esc(STATE.loginQuery)}"
+          oninput="STATE.loginQuery=this.value;rePaintList()"
+          style="padding-left:38px;padding-right:52px;background:#fff;border-radius:12px"/>
+        <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:var(--ink-4);background:var(--surface-2);padding:2px 7px;border-radius:6px">⌘K</span>
+      </div>
+    </div>
+
+    <!-- List -->
+    <div id="usr-list" style="flex:1;padding:4px 14px 8px;display:flex;flex-direction:column;gap:4px">
+      ${chooseListHtml(filtered, all)}
+    </div>
+
+    <!-- Sticky bottom CTA when someone picked -->
+    ${picked ? `<div style="position:fixed;left:0;right:0;bottom:0;z-index:30;padding:12px 14px calc(16px + env(safe-area-inset-bottom));background:linear-gradient(180deg,transparent,rgba(250,248,242,.98) 30%)">
+      <button onclick="setState({loginStage:'pin',pinBuf:''})"
+        style="width:100%;padding:14px 18px;border-radius:18px;background:#1A2E2A;border:none;color:#fff;display:flex;align-items:center;gap:12px;cursor:pointer;box-shadow:0 10px 28px rgba(15,46,42,.28)">
+        <span style="width:34px;height:34px;border-radius:50%;background:${tone.bg};color:${tone.fg};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0">${esc(initial(picked.name))}</span>
+        <span style="flex:1;text-align:left;font-family:'IBM Plex Sans Thai',sans-serif;font-size:14px;font-weight:600">ต่อไป · ${esc(picked.nick || stripPrefix(picked.name))}</span>
+        ${svgIcon('fwd',18)}
+      </button>
+    </div>` : ''}
+  </div>`;
+}
+
+function chooseListHtml(list, allUsers) {
+  if (!list.length) return `<div style="padding:40px 20px;text-align:center;color:var(--ink-3);font-size:13px">ไม่เจอชื่อ 😅</div>`;
+  return list.map((u) => {
+    const globalIdx = allUsers.findIndex(x=>x.id===u.id);
+    const tone = avTone(globalIdx);
+    const isPicked = u.id === STATE.pickedUid;
+    return `<button style="padding:11px 13px;border-radius:14px;display:flex;align-items:center;gap:12px;text-align:left;width:100%;cursor:pointer;border:${isPicked?'1.5px solid var(--primary)':'1px solid transparent'};background:${isPicked?'var(--primary-tint)':'transparent'};transition:background .12s" onclick="setState({pickedUid:'${esc(u.id)}'})">
+      <span style="width:40px;height:40px;border-radius:50%;background:${isPicked?'var(--primary-tint)':tone.bg};color:${isPicked?'var(--primary-deep)':tone.fg};display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0;border:${isPicked?'2px solid var(--primary)':'none'}">${esc(initial(u.name))}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:14px;letter-spacing:-.1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(u.nick || stripPrefix(u.name))}</div>
+        <div style="font-size:12px;color:var(--ink-3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(stripPrefix(u.name))}</div>
+      </div>
+      ${isPicked
+        ? `<span style="width:22px;height:22px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0">${svgIcon('check',13)}</span>`
+        : `<span style="color:var(--ink-4)">${svgIcon('fwd',16)}</span>`
+      }
+    </button>`;
+  }).join('');
+}
+
+function rePaintList() {
+  const q = (STATE.loginQuery||'').toLowerCase();
+  const all = sortUsersById(STATE.users);
+  const filtered = all.filter(u =>
+    !q || stripPrefix(u.name).toLowerCase().includes(q) || (u.nick||'').toLowerCase().includes(q)
+  );
+  const list = document.getElementById('usr-list');
+  if (list) list.innerHTML = chooseListHtml(filtered, all);
+}
+
+function renderPinScreen() {
+  const u = STATE.users.find(x => x.id === STATE.pickedUid);
+  if (!u) return renderWelcome();
+  const buf = STATE.pinBuf || '';
+  return `<div style="min-height:100vh;display:flex;flex-direction:column;padding:14px 16px calc(20px + env(safe-area-inset-bottom));padding-top:max(14px,env(safe-area-inset-top))">
+    <div style="width:100%;max-width:380px;margin:0 auto;flex:1;display:flex;flex-direction:column">
+      <div style="margin-bottom:16px">
+        <button class="btn-g" style="width:36px;height:36px;padding:0;border-radius:10px;display:flex;align-items:center;justify-content:center" onclick="setState({loginStage:'choose',pinBuf:''})">${svgIcon('back',18)}</button>
+      </div>
+
+      <!-- Compact name card (NO animation class — won't bounce on re-render) -->
+      <div style="padding:13px 16px;border-radius:16px;background:var(--surface-2);border:1px solid var(--border);display:flex;align-items:center;gap:12px;margin-bottom:24px">
+        ${avatarHtml(u.name, 42, 'mint')}
+        <div style="flex:1;min-width:0">
+          <div style="font-size:11px;color:var(--ink-3);font-weight:500">กำลังเข้าระบบในชื่อ</div>
+          <div style="font-weight:700;font-size:15px;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(u.nick || stripPrefix(u.name))} <span style="color:var(--ink-3);font-weight:400;font-size:12px">· ${esc(stripPrefix(u.name))}</span></div>
+        </div>
+      </div>
+
+      <div style="text-align:center;margin-bottom:18px">
+        <h1 class="h2" style="margin-bottom:6px">ใส่รหัสนักเรียน</h1>
+        <p style="font-size:12px;color:var(--ink-3)">5 หลัก · รหัสประจำตัวที่โรงเรียนออกให้</p>
+      </div>
+
+      <div class="pin-dots" style="margin-bottom:14px">
+        ${[0,1,2,3,4].map(i=>`<div class="${i<buf.length?'f':''}"></div>`).join('')}
+      </div>
+
+      <div style="text-align:center;font-size:12px;color:var(--ink-3);margin-bottom:28px">
+        ลืมรหัส? <b style="color:var(--primary-deep);font-weight:600">ติดต่อ${esc(ADMIN_NAME)}</b>
+      </div>
+
+      <div style="flex:1"></div>
+
+      <div class="numpad">
+        ${[1,2,3,4,5,6,7,8,9].map(n=>`<button onclick="pinPress(${n})">${n}</button>`).join('')}
+        <button class="back" onclick="pinClear()">ล้าง</button>
+        <button onclick="pinPress(0)">0</button>
+        <button class="back" onclick="pinBack()">${svgIcon('back',18)}</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderAdminLogin() {
+  return `<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 16px">
+    <div style="width:100%;max-width:420px">
+      <div class="card fade-up" style="padding:28px 24px">
+        <div style="text-align:center;margin-bottom:22px">
+          <div style="width:64px;height:64px;border-radius:18px;background:linear-gradient(135deg,rgba(245,182,56,.2),rgba(245,182,56,.08));border:1px solid rgba(245,182,56,.32);margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:32px">👑</div>
+          <h2 class="h2" style="margin-bottom:4px">เข้าสู่ระบบ Admin</h2>
+          <div style="font-size:12px;color:var(--ink-3)">เหรัญญิก · ${esc(ADMIN_NAME)}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <input id="adm-pw" type="password" placeholder="รหัสผ่าน Admin" autofocus onkeydown="if(event.key==='Enter')tryAdminLogin()"/>
+          <details style="margin-top:4px">
+            <summary style="cursor:pointer;font-size:12px;color:var(--ink-3);padding:6px 0">✨ Claude API key (เปิด AI ตรวจสลิป)</summary>
+            <input id="adm-key" type="password" placeholder="sk-ant-... (เก็บไว้ใน sessionStorage เท่านั้น)" value="${esc(STATE.aiKey||'')}" style="margin-top:8px;font-size:12px"/>
+            <div style="font-size:11px;color:var(--ink-3);margin-top:6px;line-height:1.5">เก็บเฉพาะ session นี้ ไม่ส่งขึ้น server · ออกจากระบบจะถูกลบ</div>
+          </details>
+          <button class="btn btn-p" style="width:100%;margin-top:6px" onclick="tryAdminLogin()">เข้าสู่ระบบ</button>
+          <button class="btn btn-g" style="width:100%" onclick="setState({loginStage:'welcome'})">${svgIcon('back',16)} ย้อนกลับ</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+function renderMobileUser() {
+  const r = STATE.route;
+  let body, tab;
+  if (r.startsWith('#/u/pay')) { body = renderMobilePay(); tab = 'pay'; }
+  else if (r === '#/u/chart') { body = renderMobileChart(); tab = 'chart'; }
+  else if (r === '#/u/lb') { body = renderMobileLeaderboard(); tab = 'lb'; }
+  else { body = renderMobileHome(); tab = 'home'; }
+  // Pay wizard has its own back nav + sticky CTA; skip the floating bottom nav to avoid overlap
+  const showBottomNav = tab !== 'pay';
+  return `<div class="m-shell"${showBottomNav?'':' style="padding-bottom:30px"'}>${body}${showBottomNav?renderBottomNav(tab):''}</div>`;
+}
+
+function renderBottomNav(active) {
+  const items = [
+    {k:'home', i:'home', l:'หน้าหลัก', h:'#/u/home'},
+    {k:'pay',  i:'send', l:'จ่ายเงิน', h:'#/u/pay'},
+    {k:'chart',i:'chart',l:'สถิติ',    h:'#/u/chart'},
+    {k:'lb',   i:'trophy',l:'อันดับ',  h:'#/u/lb'},
+  ];
+  return `<div class="m-bottom-nav">
+    <div class="pill-bar">
+      ${items.map(it => `<button class="${active===it.k?'on':''}" onclick="${it.k==='pay'?'startPayWizard()':`navigate('${it.h}')`}">
+        ${svgIcon(it.i, 22)}
+        <span>${it.l}</span>
+      </button>`).join('')}
+    </div>
+  </div>`;
+}
+
+function renderMobileTopUser(opts={}) {
+  const u = STATE.users.find(x => x.id === STATE.session?.uid);
+  if (!u) return '';
+  const mine = STATE.payments.filter(p => p.uid===u.id);
+  const ok = mine.filter(p=>p.status==='verified').length;
+  const total = STATE.expenses.length;
+  return `<div class="m-topbar">
+    ${avatarHtml(u.name, 40, 'mint')}
+    <div style="flex:1;min-width:0">
+      <div style="font-size:11px;color:var(--ink-3);font-weight:500">สวัสดี · <b style="color:var(--ink-2)">${esc(u.nick || stripPrefix(u.name))}</b></div>
+      <div style="font-size:13px;font-weight:600;margin-top:1px"><span class="num">${ok}/${total}</span> รายการ ${opts.rank ? `· <span class="pill pill-gold" style="font-size:10px;padding:2px 7px">#${opts.rank}</span>` : ''}</div>
+    </div>
+    <button class="btn-g" style="width:36px;height:36px;padding:0;border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--danger)" onclick="logout()">${svgIcon('close',16)}</button>
+  </div>`;
+}
+
+function renderMobileHome() {
+  const uid = STATE.session?.uid;
+  const u = STATE.users.find(x => x.id === uid);
+  if (!u) return '';
+  const mine = STATE.payments.filter(p => p.uid===uid);
+  const ok = mine.filter(p=>p.status==='verified').length;
+  const board = calcBoard(STATE.users, STATE.payments);
+  const rank = board.findIndex(b=>b.id===uid)+1;
+  const target = totalTarget();
+  const got = totalVerified();
+  const grand = STATE.savedBalance + got;
+  const pct = target>0 ? Math.min(100, (got/target)*100) : 0;
+  const unpaid = STATE.expenses.filter(e => !mine.find(p => p.eid===e.id));
+  const pendingMine = mine.filter(p=>p.status==='pending');
+  const owedTotal = unpaid.reduce((s,e)=>s+e.amount, 0);
+
+  return `${renderMobileTopUser({rank})}
+  <div class="m-main">
+    <!-- Hero balance -->
+    <div class="hero-mint fade-up" style="margin-bottom:14px">
+      <div style="position:relative">
+        <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;opacity:.86;margin-bottom:4px">
+          <span>ในกระเป๋าห้อง</span>
+          <span class="pill pill-ghost" style="font-size:10px">+${thb(got)} ปีนี้</span>
+        </div>
+        <div class="num-hero">
+          <span style="font-size:24px;font-weight:500;margin-right:3px;opacity:.85">฿</span>${cnum(grand,'home-grand')}
+        </div>
+        <div style="margin-top:14px;padding-top:11px;border-top:1px solid rgba(255,255,255,.16)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <span style="font-size:11px;opacity:.82">เป้า ปี 2569</span>
+            <span class="num" style="font-size:12px;font-weight:700">${pct.toFixed(0)}%</span>
+          </div>
+          <div style="height:8px;background:rgba(255,255,255,.18);border-radius:5px;overflow:hidden">
+            <div style="height:100%;width:${pct.toFixed(1)}%;background:linear-gradient(90deg,#F5B638,#FFD56A);border-radius:5px;box-shadow:0 0 12px rgba(245,182,56,.65);transition:width .8s cubic-bezier(.34,1.4,.64,1)"></div>
+          </div>
+          <div style="margin-top:8px;font-size:11px;opacity:.85"><b class="num">${thb(got)}</b> / ${thb(target)}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- คุณต้องจ่าย -->
+    <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px;padding:0 4px">
+      <div>
+        <div class="label-cap">คุณต้องจ่าย</div>
+        <div style="font-size:15px;font-weight:700;margin-top:2px">${unpaid.length===0?'จ่ายครบทุกอย่างแล้ว 🎉':`ค้าง ${unpaid.length} รายการ`}</div>
+      </div>
+      ${unpaid.length>0 ? `<div class="num" style="font-size:18px;font-weight:700;color:var(--primary-deep)">${thb(owedTotal)}</div>` : ''}
+    </div>
+
+    <div class="card" style="padding:6px;margin-bottom:14px">
+      ${STATE.expenses.map((e,i) => {
+        const p = mine.find(x=>x.eid===e.id);
+        const isOk = p?.status==='verified';
+        const isPending = p?.status==='pending';
+        return `<div class="slide-in" style="padding:12px 12px;display:flex;align-items:center;gap:12px;border-bottom:${i<STATE.expenses.length-1?'1px solid var(--border)':'none'};animation-delay:${i*.05}s">
+          ${expIconChip(e.name, 42)}
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(e.name.replace(/ ?[📚🛡️🎓].*$/,''))}</div>
+            <div style="font-size:11px;color:var(--ink-3);margin-top:1px">${isOk?'✓ จ่ายแล้ว':isPending?'⏳ รอ Admin ตรวจ':'ยังไม่จ่าย'}</div>
+          </div>
+          <div style="text-align:right">
+            <div class="num-sm" style="color:${isOk?'var(--primary-deep)':'var(--ink)'};${isOk?'text-decoration:line-through;opacity:.7':''}">${thb(e.amount)}</div>
+            ${isOk?`<div style="margin-top:3px;color:var(--primary);font-size:12px;font-weight:600">${svgIcon('check',12)} ครบ</div>`:''}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    ${unpaid.length>0 ? `<button class="btn btn-x" style="width:100%;padding:15px;font-size:15px" onclick="startPayWizard()">
+      💸 จ่ายทั้งหมด ${thb(owedTotal)}
+    </button>` : ''}
+
+    ${pendingMine.length>0 ? `<div class="card" style="margin-top:14px;padding:14px 16px;border-color:rgba(232,154,42,.32);background:var(--warning-tint)">
+      <div style="font-size:12px;color:#A66A0F;font-weight:700;display:flex;align-items:center;gap:6px">
+        <span class="loader" style="width:14px;height:14px;border-color:rgba(232,154,42,.3);border-top-color:#A66A0F"></span>
+        รอ Admin ตรวจ ${pendingMine.length} รายการ
+      </div>
+      <div style="font-size:11px;color:#8B5A0F;margin-top:4px;line-height:1.5">ส่งสลิปแล้ว · จะอัปเดตทันทีที่ Admin อนุมัติ</div>
+    </div>` : ''}
+  </div>`;
+}
+
+function renderMobilePay() {
+  if (STATE.payStep === 1) return renderPayStep1();
+  if (STATE.payStep === 2) return renderPayStep2();
+  if (STATE.payStep === 3) return renderPayStep3();
+  return renderPayStep1();
+}
+
+function renderPayStep1() {
+  const uid = STATE.session?.uid;
+  const mine = STATE.payments.filter(p => p.uid===uid);
+  const unpaid = STATE.expenses.filter(e => !mine.find(p => p.eid===e.id));
+  const sel = STATE.paySelected || [];
+  const total = unpaid.filter(e => sel.includes(e.id)).reduce((s,e)=>s+e.amount,0);
+  if (!unpaid.length) {
+    return `<div class="m-shell" style="padding-bottom:120px"><div class="m-topbar">
+      <button class="btn-g" style="width:36px;height:36px;padding:0;border-radius:10px;display:flex;align-items:center;justify-content:center" onclick="navigate('#/u/home')">${svgIcon('back',18)}</button>
+      <div style="flex:1"><div class="label-cap">จ่ายเงิน</div><div class="h3">ทุกอย่างเรียบร้อย!</div></div>
+    </div>
+    <div class="m-main">
+      <div class="card pop-in" style="padding:40px 24px;text-align:center">
+        <div style="font-size:60px;margin-bottom:10px">🎉</div>
+        <div class="h2" style="margin-bottom:6px">จ่ายครบทุกรายการแล้ว</div>
+        <div style="font-size:13px;color:var(--ink-3)">ขอบคุณนะที่จ่ายไวมากกก 🚀</div>
+        <button class="btn btn-p" style="margin-top:20px" onclick="navigate('#/u/home')">กลับหน้าหลัก</button>
+      </div>
+    </div></div>`;
+  }
+  return `<div style="min-height:100vh;padding-bottom:120px">
+    <div class="m-topbar">
+      <button class="btn-g" style="width:36px;height:36px;padding:0;border-radius:10px;display:flex;align-items:center;justify-content:center" onclick="navigate('#/u/home')">${svgIcon('back',18)}</button>
+      <div style="flex:1">
+        <div class="steps"><div class="on"></div><div></div><div></div></div>
+        <div style="font-size:11px;color:var(--ink-3);margin-top:4px;font-weight:600;letter-spacing:.3px">ขั้นที่ 1/3 · เลือกรายการ</div>
+      </div>
+    </div>
+    <div class="m-main">
+      <div class="card fade-up" style="padding:12px 14px;display:flex;align-items:center;gap:10px;margin-bottom:12px;background:var(--accent-tint);border-color:rgba(245,182,56,.32)">
+        <span style="font-size:16px">💡</span>
+        <div style="flex:1;font-size:12px;color:#8B5A0F;line-height:1.5">Tip: จ่ายครบรอบเดียวประหยัดเวลา!</div>
+        <button class="btn btn-g" style="padding:6px 12px;font-size:11px" onclick="selectAllUnpaid()">เลือกทั้งหมด</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        ${unpaid.map((e,i) => {
+          const on = sel.includes(e.id);
+          return `<button class="card slide-in" style="animation-delay:${i*.05}s;padding:14px 14px;display:flex;align-items:center;gap:12px;text-align:left;cursor:pointer;border:${on?'1.5px solid var(--primary)':'1px solid var(--border)'};background:${on?'var(--primary-tint)':'#fff'}" onclick="togglePaySelect('${e.id}')">
+            <div style="width:24px;height:24px;border-radius:7px;border:1.8px solid ${on?'var(--primary)':'var(--border-strong)'};background:${on?'var(--primary)':'transparent'};display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0">${on?svgIcon('check',14):''}</div>
+            ${expIconChip(e.name, 38)}
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(e.name.replace(/ ?[📚🛡️🎓].*$/,''))}</div>
+              ${e.desc?`<div style="font-size:11px;color:var(--ink-3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(e.desc)}</div>`:''}
+            </div>
+            <div class="num-sm" style="color:${on?'var(--primary-deep)':'var(--ink-2)'};white-space:nowrap">${thb(e.amount)}</div>
+          </button>`;
+        }).join('')}
+      </div>
+    </div>
+    <div style="position:fixed;left:0;right:0;bottom:0;padding:14px 16px calc(20px + env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(250,248,242,0),#FAF8F2 30%);z-index:30">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;padding:0 4px">
+        <span style="font-size:12px;color:var(--ink-3)">เลือก ${sel.length} รายการ</span>
+        <span class="num" style="font-size:18px;font-weight:800;color:var(--primary-deep)">${thb(total)}</span>
+      </div>
+      <button class="btn btn-x" style="width:100%;padding:14px;${sel.length?'':'opacity:.4;pointer-events:none'}" onclick="pwNext()">ถัดไป ${svgIcon('fwd',16)}</button>
+    </div>
+  </div>`;
+}
+
+function renderPayStep2() {
+  const sel = STATE.paySelected || [];
+  const items = STATE.expenses.filter(e => sel.includes(e.id));
+  const total = items.reduce((s,e)=>s+e.amount, 0);
+  const slip = STATE.paySlip;
+  return `<div style="min-height:100vh;padding-bottom:120px">
+    <div class="m-topbar">
+      <button class="btn-g" style="width:36px;height:36px;padding:0;border-radius:10px;display:flex;align-items:center;justify-content:center" onclick="pwBack()">${svgIcon('back',18)}</button>
+      <div style="flex:1">
+        <div class="steps"><div class="done"></div><div class="on"></div><div></div></div>
+        <div style="font-size:11px;color:var(--ink-3);margin-top:4px;font-weight:600;letter-spacing:.3px">ขั้นที่ 2/3 · สแกน QR + แนบสลิป</div>
+      </div>
+    </div>
+    <div class="m-main">
+      <!-- QR Hero -->
+      <div class="hero-mint fade-up" style="text-align:center;margin-bottom:14px;padding:20px 18px">
+        <div style="position:relative">
+          <div style="font-size:11px;opacity:.85;margin-bottom:4px">โอนเข้าพร้อมเพย์ · ยอด</div>
+          <div class="num" style="font-size:36px;font-weight:800;color:#F5B638;letter-spacing:-1.2px;text-shadow:0 2px 14px rgba(245,182,56,.3)">${thb(total)}</div>
+          <div style="display:inline-block;padding:12px;background:#fff;border-radius:18px;margin-top:14px;box-shadow:0 0 0 4px rgba(255,255,255,.16),0 16px 32px -12px rgba(0,0,0,.32)">
+            ${STATE.qr ? `<img src="${STATE.qr}" style="width:180px;height:180px;display:block;border-radius:10px;object-fit:contain"/>` : `<div style="width:180px;height:180px;display:flex;align-items:center;justify-content:center;color:var(--ink-3);font-size:13px;background:var(--surface-2);border-radius:10px">ยังไม่มี QR</div>`}
+          </div>
+          <div style="margin-top:11px;font-size:12px;color:#fff;opacity:.94;font-weight:600">${esc(RECEIVER_NAME)}</div>
+          <div style="font-size:11px;opacity:.7;margin-top:2px">Thai PromptPay</div>
+        </div>
+      </div>
+
+      <!-- Receipt summary -->
+      <div class="card fade-up" style="padding:14px 16px;margin-bottom:14px">
+        <div class="label-cap" style="margin-bottom:8px">รายการที่จ่าย</div>
+        ${items.map(e=>`<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px">
+          <span style="color:var(--ink-2)">${esc(e.name.replace(/ ?[📚🛡️🎓].*$/,''))}</span>
+          <span class="num-sm">${thb(e.amount)}</span>
+        </div>`).join('')}
+        <div style="display:flex;justify-content:space-between;padding:10px 0 0;border-top:1px solid var(--border);margin-top:6px">
+          <span style="font-weight:700;font-size:14px">รวม</span>
+          <span class="num" style="font-weight:800;font-size:17px;color:var(--primary-deep)">${thb(total)}</span>
+        </div>
+      </div>
+
+      <!-- Slip upload -->
+      <div class="card fade-up" style="padding:16px;margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <h3 class="h3">แนบสลิปโอนเงิน</h3>
+          <span class="pill pill-rose" style="font-size:10px;padding:2px 8px">บังคับ</span>
+        </div>
+        ${slip ? `<div style="text-align:center">
+          <div style="display:inline-block;position:relative">
+            <img src="${slip}" style="max-width:100%;max-height:240px;border-radius:12px;border:2px solid var(--primary);box-shadow:0 8px 24px rgba(15,138,107,.18);cursor:zoom-in" onclick="openSlipZoom('${slip}')"/>
+            <div style="position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(15,138,107,.4)">${svgIcon('check',16)}</div>
+          </div>
+          <div style="margin-top:10px"><button class="btn btn-g" style="font-size:12px;padding:8px 14px" onclick="setState({paySlip:null})">เปลี่ยนสลิป</button></div>
+        </div>` : `<label for="slip-inp" style="display:block;border:2px dashed rgba(15,138,107,.32);border-radius:14px;padding:24px;text-align:center;cursor:pointer;background:rgba(15,138,107,.04)">
+          <div style="font-size:34px;margin-bottom:8px">📷</div>
+          <div style="font-weight:600;font-size:13px;color:var(--primary-deep)">แตะเพื่อเลือก / ถ่ายสลิป</div>
+          <div style="font-size:11px;color:var(--ink-3);margin-top:4px">JPG, PNG · บังคับแนบก่อนส่ง</div>
+        </label>
+        <input id="slip-inp" type="file" accept="image/*" capture="environment" onchange="uploadSlip(this)" style="display:none"/>`}
+        <div style="margin-top:12px;padding:10px 12px;background:var(--surface-2);border-radius:10px;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-2)">
+          <span style="font-size:14px">🔒</span>
+          <span>พร้อมส่งให้ Admin · รอ Admin ตรวจ</span>
+        </div>
+      </div>
+    </div>
+    <div style="position:fixed;left:0;right:0;bottom:0;padding:14px 16px calc(20px + env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(250,248,242,0),#FAF8F2 30%);z-index:30">
+      <button class="btn btn-p" style="width:100%;padding:15px;${slip?'':'opacity:.4;pointer-events:none'}" onclick="pwNext()">
+        ${svgIcon('send',16)} ส่งให้ Admin ตรวจ
+      </button>
+    </div>
+  </div>`;
+}
+
+function renderPayStep3() {
+  const items = STATE.expenses.filter(e => STATE.paySelected.includes(e.id));
+  const total = items.reduce((s,e)=>s+e.amount,0);
+  // Build a friendly reference: CF-yymmdd-#### from latest insertion timestamp
+  const now = new Date();
+  const yy = String(now.getFullYear()).slice(-2);
+  const mm = String(now.getMonth()+1).padStart(2,'0');
+  const dd = String(now.getDate()).padStart(2,'0');
+  const refNum = `CF-${yy}${mm}${dd}-${String(Date.now()).slice(-3)}`;
+  return `<div style="min-height:100vh;padding-bottom:30px">
+    <div class="m-topbar">
+      <div style="flex:1;text-align:center">
+        <div class="steps" style="justify-content:center"><div class="done"></div><div class="done"></div><div class="on"></div></div>
+        <div style="font-size:11px;color:var(--ink-3);margin-top:4px;font-weight:600;letter-spacing:.3px">ขั้นที่ 3/3 · ส่งสำเร็จ</div>
+      </div>
+    </div>
+    <div class="m-main" style="text-align:center;padding-top:24px">
+      <div class="success-wrap">
+        <div class="success-circle">${svgIcon('check',48)}</div>
+      </div>
+      <h1 class="h1 fade-up" style="margin-top:22px;animation-delay:.15s">ส่งสลิปแล้ว! 🎉</h1>
+      <p class="fade-up" style="font-size:13px;color:var(--ink-3);margin-top:8px;line-height:1.65;animation-delay:.2s">รอ Admin ยืนยันภายใน 24 ชม.<br>คุณจะได้รับแจ้งเมื่อยืนยันแล้ว</p>
+
+      <div class="card fade-up" style="text-align:left;padding:14px 16px;margin-top:22px;animation-delay:.25s">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border)">
+          <div class="label-cap">ใบเสร็จ</div>
+          <div class="num" style="font-size:11px;color:var(--ink-3);letter-spacing:.4px">#${refNum}</div>
+        </div>
+        ${items.map(e=>{
+          const emoji = (e.name.match(/[📚🛡️🎓🏦💵🎯🎁🎉]/)||['💰'])[0];
+          return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;font-size:13px">
+            <span style="font-size:16px">${emoji}</span>
+            <span style="flex:1;color:var(--ink-2);text-align:left">${esc(e.name.replace(/ ?[📚🛡️🎓].*$/,''))}</span>
+            <span class="num-sm">${thb(e.amount)}</span>
+          </div>`;
+        }).join('')}
+        <div style="display:flex;justify-content:space-between;padding:10px 0 0;border-top:1px solid var(--border);margin-top:6px">
+          <span style="font-weight:700">รวมยอด</span>
+          <span class="num" style="font-weight:800;font-size:18px;color:var(--primary-deep)">${thb(total)}</span>
+        </div>
+        <div style="margin-top:10px;padding:10px 12px;background:var(--warning-tint);border:1px solid rgba(232,154,42,.28);border-radius:11px;display:flex;align-items:center;gap:8px">
+          <span style="font-size:14px">⏳</span>
+          <span style="font-size:12px;color:#8B5A0F;font-weight:600">สถานะ: รอ Admin ยืนยัน</span>
+        </div>
+      </div>
+
+      <div class="fade-up" style="display:flex;flex-direction:column;gap:10px;margin-top:22px;animation-delay:.35s">
+        <button class="btn btn-g" style="width:100%" onclick="STATE.payStep=1;STATE.paySelected=[];STATE.paySlip=null;render()">จ่ายรายการอื่น</button>
+        <button class="btn btn-x" style="width:100%" onclick="STATE.payStep=1;STATE.paySelected=[];STATE.paySlip=null;navigate('#/u/home')">กลับหน้าหลัก</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderMobileChart() {
+  const target = totalTarget();
+  const got = totalVerified();
+  const grand = STATE.savedBalance + got;
+  const stats = [
+    {l:'ยกมา ปี 68', n:STATE.savedBalance, ck:'chart-saved', c:'#D69A1F', i:'wallet', iconBg:'rgba(245,182,56,.18)', bg:'linear-gradient(135deg,rgba(245,182,56,.14),rgba(245,182,56,.04))', ring:'rgba(245,182,56,.30)'},
+    {l:'เก็บได้ ปี 69', n:got, ck:'chart-got', c:'#0A6B53', i:'cash', iconBg:'rgba(15,138,107,.16)', bg:'linear-gradient(135deg,rgba(15,138,107,.12),rgba(15,138,107,.04))', ring:'rgba(15,138,107,.26)'},
+    {l:'รวมในกระเป๋า', n:grand, ck:'chart-grand', c:'#063D2F', i:'wallet', iconBg:'rgba(10,107,83,.18)', bg:'linear-gradient(135deg,rgba(10,107,83,.14),rgba(10,107,83,.04))', ring:'rgba(10,107,83,.30)'},
+  ];
+  return `${renderMobileTopUser()}
+  <div class="m-main">
+    <div style="margin-bottom:14px">
+      <div class="label-cap">ภาพรวมเงินห้อง</div>
+      <h1 class="h2" style="margin-top:3px">ห้องเรารวมเงินกันยังไงบ้าง 📊</h1>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
+      ${stats.map((s,i)=>`<div class="card slide-in" style="padding:16px 18px;background:${s.bg};border-color:${s.ring};animation-delay:${i*.06}s">
+        <div style="display:flex;align-items:center;gap:14px">
+          <div style="width:48px;height:48px;border-radius:14px;background:${s.iconBg};color:${s.c};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <span style="width:24px;height:24px;display:inline-flex">${ICO[s.i]}</span>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:11px;color:var(--ink-3);font-weight:600;letter-spacing:.3px">${s.l}</div>
+            <div class="num-stat" style="color:${s.c};margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+              <span style="font-size:16px;opacity:.7;margin-right:2px">฿</span>${cnum(s.n,s.ck)}
+            </div>
+          </div>
+        </div>
+      </div>`).join('')}
+    </div>
+
+    <div class="card fade-up" style="padding:18px;margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px">
+        <h3 class="h3">แยกตามรายการ</h3>
+        <div class="num" style="font-size:11px;color:var(--ink-3)">เป้า ${thb(target)}</div>
+      </div>
+      ${STATE.expenses.map(e=>{
+        const paid = STATE.payments.filter(p=>p.eid===e.id && p.status==='verified').length;
+        const pend = STATE.payments.filter(p=>p.eid===e.id && p.status==='pending').length;
+        const n = STATE.users.length || 1;
+        const paidPct = Math.min(100, (paid/n)*100);
+        const pendPct = Math.min(100-paidPct, (pend/n)*100);
+        return `<div style="margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+            <span style="font-size:12px;font-weight:600">${esc(e.name.replace(/ ?[📚🛡️🎓].*$/,''))}</span>
+            <span class="num" style="font-size:11px;color:var(--primary-deep)">${paid}/${n} คน · ${thb(paid*e.amount)}</span>
+          </div>
+          <div class="bar">
+            <div class="fill" style="width:${paidPct.toFixed(1)}%"></div>
+            <div class="pending" style="left:${paidPct.toFixed(1)}%;width:${pendPct.toFixed(1)}%"></div>
+          </div>
+          ${pend>0?`<div style="font-size:10px;color:var(--warning);margin-top:3px">⏳ รอตรวจ ${pend} คน</div>`:''}
+        </div>`;
+      }).join('')}
+      <div style="display:flex;gap:14px;margin-top:8px;padding-top:10px;border-top:1px solid var(--border)">
+        <span style="font-size:11px;color:var(--primary-deep);display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:2px;background:var(--primary)"></span>ยืนยันแล้ว</span>
+        <span style="font-size:11px;color:#A66A0F;display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:2px;background:repeating-linear-gradient(45deg,rgba(232,154,42,.65) 0 3px,rgba(232,154,42,.2) 3px 6px)"></span>รอตรวจ</span>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderMobileLeaderboard() {
+  const mode = STATE.lbMode || 'fast';
+  const total = STATE.expenses.length || 1;
+  let board = calcBoard(STATE.users, STATE.payments);
+  if (mode === 'most') {
+    board = [...board].sort((a,b) => b.cnt - a.cnt || a.first - b.first);
+  } else if (mode === 'unpaid') {
+    board = [...board].sort((a,b) => a.cnt - b.cnt);
+  }
+  const me = STATE.session?.uid;
+  const myIdx = me ? board.findIndex(b=>b.id===me) : -1;
+  const MEDAL = ['🥇','🥈','🥉'];
+  const PODIUM = [
+    {idx:1, h:100, col:'#C0C0C8', tone:'linear-gradient(180deg,#D8DCE3,#B0B5BD)', bg:'rgba(192,192,200,.18)'},
+    {idx:0, h:130, col:'#F5B638', tone:'linear-gradient(180deg,#F5B638,#D69A1F)', bg:'rgba(245,182,56,.18)'},
+    {idx:2, h:80,  col:'#CD7F32', tone:'linear-gradient(180deg,#D9B68A,#A56A2C)', bg:'rgba(205,127,50,.16)'},
+  ];
+  const podiumHtml = PODIUM.map(p => {
+    const u = board[p.idx];
+    if (!u) return `<div style="flex:1"></div>`;
+    const isFirst = p.idx === 0;
+    return `<div class="fade-up" style="flex:1;display:flex;flex-direction:column;align-items:center;animation-delay:${p.idx*.1}s">
+      ${isFirst?`<div style="font-size:28px;animation:crownBob 1.8s ease-in-out infinite;margin-bottom:4px">👑</div>`:''}
+      <div style="position:relative;margin-bottom:8px">
+        <div style="width:${isFirst?56:48}px;height:${isFirst?56:48}px;border-radius:50%;background:${p.bg};color:${p.col};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:${isFirst?20:17}px;border:2.5px solid #fff;box-shadow:0 6px 14px rgba(15,46,42,.14)${isFirst?',0 0 26px rgba(245,182,56,.5)':''}">${esc(initial(u.name))}</div>
+        <div style="position:absolute;bottom:-3px;right:-3px;width:22px;height:22px;border-radius:50%;background:${p.col};border:2.5px solid #fff;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:800">${p.idx+1}</div>
+      </div>
+      <div style="font-size:13px;font-weight:700;color:var(--ink);white-space:nowrap;max-width:84px;overflow:hidden;text-overflow:ellipsis">${esc(u.nick || firstName(u.name))}</div>
+      <div class="num" style="font-size:11px;color:var(--ink-3);margin-top:2px">${u.cnt}/${total} รายการ</div>
+      <div style="margin-top:9px;width:100%;height:${p.h}px;background:${p.tone};border-radius:14px 14px 0 0;display:flex;align-items:flex-start;justify-content:center;padding:14px 0;color:#fff;font-size:${isFirst?26:20}px;${isFirst?'box-shadow:0 10px 24px -8px rgba(245,182,56,.6),inset 0 1px 0 rgba(255,255,255,.32)':''}">${MEDAL[p.idx]}</div>
+    </div>`;
+  }).join('');
+
+  const restList = board.length > 3 ? board.slice(3).map((u,i) => {
+    const isMe = u.id === me;
+    return `<div class="slide-in" style="display:flex;align-items:center;gap:11px;padding:11px 14px;border-bottom:${i<board.length-4?'1px solid var(--border)':'none'};${isMe?'background:var(--primary-tint)':''};animation-delay:${Math.min(i*.025,.5)}s">
+      <div class="num" style="font-size:14px;font-weight:800;color:${isMe?'var(--primary-deep)':'var(--ink-3)'};width:28px;text-align:center">#${i+4}</div>
+      ${avatarHtml(u.name, 34, isMe?'mint':'cream')}
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(u.nick || stripPrefix(u.name))} ${isMe?'<span style="color:var(--primary-deep);font-size:11px">· คุณ</span>':''}</div>
+        ${u.cnt>0?`<div class="num" style="font-size:10px;color:var(--ink-3);margin-top:1px">ไวสุด ${fmtDate(u.first)}</div>`:''}
+      </div>
+      <div class="num" style="font-size:13px;font-weight:700;color:${u.cnt>0?(isMe?'var(--primary-deep)':'var(--ink-2)'):'var(--ink-3)'}">${u.cnt}/${total}</div>
+    </div>`;
+  }).join('') : '';
+
+  const myCard = (myIdx >= 3 && me) ? `<div class="hero-mint fade-up" style="padding:14px 16px;margin:14px 0;display:flex;align-items:center;gap:12px">
+    <div class="num" style="font-size:26px;font-weight:800;min-width:44px;text-align:center">#${myIdx+1}</div>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:11px;opacity:.86">อันดับของคุณ</div>
+      <div style="font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(board[myIdx].nick || stripPrefix(board[myIdx].name))} · จ่าย ${board[myIdx].cnt}/${total}</div>
+    </div>
+  </div>` : '';
+
+  const modes = [
+    {k:'fast', l:'🚀 จ่ายไว'},
+    {k:'most', l:'✅ ครบมากสุด'},
+    {k:'unpaid', l:'⏳ ยังไม่จ่าย'},
+  ];
+  return `${renderMobileTopUser()}
+  <div class="m-main">
+    <div style="margin-bottom:12px">
+      <div class="label-cap">อันดับห้องเรา</div>
+      <h1 class="h2" style="margin-top:3px">${mode==='unpaid'?'ใครยังค้างเยอะสุด? 😅':mode==='most'?'ใครจ่ายครบสุด? ✅':'ใครรวมเงินไวสุด? 🏆'}</h1>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;scrollbar-width:none">
+      ${modes.map(m=>`<button class="${mode===m.k?'on':''}" style="padding:8px 14px;border-radius:20px;background:${mode===m.k?'#1A2E2A':'#fff'};color:${mode===m.k?'#fff':'var(--ink-3)'};border:1px solid ${mode===m.k?'#1A2E2A':'var(--border)'};font-size:12px;font-weight:600;white-space:nowrap;cursor:pointer" onclick="setState({lbMode:'${m.k}'})">${m.l}</button>`).join('')}
+    </div>
+    <div style="position:relative;padding:24px 8px 0;border-radius:22px;background:linear-gradient(180deg,rgba(245,182,56,.14) 0%,transparent 80%);overflow:hidden;margin-bottom:8px">
+      <div style="position:absolute;top:12px;left:30px;font-size:14px;opacity:.5">✨</div>
+      <div style="position:absolute;top:38px;right:32px;font-size:10px;opacity:.5">✨</div>
+      <div style="position:absolute;top:64px;left:48%;font-size:9px;opacity:.55">✨</div>
+      <div style="display:flex;align-items:flex-end;justify-content:center;gap:8px;padding:18px 4px 0">${podiumHtml}</div>
+    </div>
+    ${myCard}
+    ${restList?`<div class="card" style="margin-top:14px;overflow:hidden">
+      <div style="padding:12px 16px 8px"><div class="label-cap">อันดับ 4 – ${board.length}</div></div>
+      ${restList}
+    </div>`:''}
+  </div>`;
+}
+function renderMobileAdmin() {
+  const r = STATE.route;
+  let tab = 'ov';
+  if (r === '#/a/vr') tab = 'vr';
+  else if (r === '#/a/ex') tab = 'ex';
+  else if (r === '#/a/mb') tab = 'mb';
+  else if (r === '#/a/qr') tab = 'qr';
+  else if (r === '#/a/bl') tab = 'bl';
+  const pend = pendingPays().length;
+  const tabs = [
+    {k:'ov', l:'📊 ภาพรวม', h:'#/a/ov'},
+    {k:'vr', l:`✅ สลิป${pend>0?` <span class="pill pill-amber" style="padding:1px 6px;font-size:10px;margin-left:3px">${pend}</span>`:''}`, h:'#/a/vr'},
+    {k:'ex', l:'💰 รายการ', h:'#/a/ex'},
+    {k:'mb', l:'👥 สมาชิก', h:'#/a/mb'},
+    {k:'qr', l:'📱 QR', h:'#/a/qr'},
+    {k:'bl', l:'💵 ยอด', h:'#/a/bl'},
+  ];
+  let body;
+  if (tab === 'vr') body = renderAdmVerify();
+  else if (tab === 'ex') body = renderAdmExp();
+  else if (tab === 'mb') body = renderAdmMembers();
+  else if (tab === 'qr') body = renderAdmQR();
+  else if (tab === 'bl') body = renderAdmBalance();
+  else body = renderAdmOverview();
+  return `<div class="m-shell" style="padding-bottom:30px">
+    <div class="m-topbar">
+      <div style="width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,rgba(245,182,56,.22),rgba(245,182,56,.08));border:1px solid rgba(245,182,56,.32);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">👑</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:10px;color:var(--ink-3);font-weight:600;letter-spacing:.5px">ADMIN · ${esc(ADMIN_NAME)}</div>
+        <div style="font-size:14px;font-weight:700">Class Fund · ${esc(CLASS_NAME)}</div>
+      </div>
+      <button class="btn-g" style="width:36px;height:36px;padding:0;border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--danger)" onclick="logout()">${svgIcon('close',16)}</button>
+    </div>
+    <div class="m-tab-bar">
+      ${tabs.map(t=>`<button class="${tab===t.k?'on':''}" onclick="navigate('${t.h}')">${t.l}</button>`).join('')}
+    </div>
+    <div class="m-main" style="padding-top:16px">${body}</div>
+  </div>`;
+}
+
+function renderAdmOverview() {
+  const ok = STATE.payments.filter(p=>p.status==='verified');
+  const pend = pendingPays().length;
+  const got = totalVerified();
+  const target = totalTarget();
+  const grand = STATE.savedBalance + got;
+  const pct = target>0 ? Math.min(100, got/target*100) : 0;
+  const today = new Date().toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'});
+  const stats = [
+    {l:'ยกมา ปี 68', n:STATE.savedBalance, ck:'ov-saved', prefix:'฿', c:'#D69A1F', i:'wallet', bg:'var(--accent-tint)', ring:'rgba(245,182,56,.3)'},
+    {l:'เก็บได้ ปี 69', n:got, ck:'ov-got', prefix:'฿', c:'#0A6B53', i:'cash', bg:'var(--primary-tint)', ring:'rgba(15,138,107,.26)'},
+    {l:'รวมทั้งหมด', n:grand, ck:'ov-grand', prefix:'฿', c:'#063D2F', i:'wallet', bg:'#E8EEF7', ring:'rgba(31,61,112,.22)'},
+    {l:'รอตรวจ', n:pend, ck:'ov-pend', prefix:'', c:'#A66A0F', i:'check', bg:'var(--warning-tint)', ring:'rgba(232,154,42,.3)'},
+  ];
+  return `<div style="margin-bottom:14px">
+    <div class="label-cap">ภาพรวม · ${esc(today)}</div>
+    <h1 class="h2" style="margin-top:3px">สวัสดี ${esc(ADMIN_NAME)} — ห้องเรารวมเงินกันยังไงบ้าง 👋</h1>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+    ${stats.map((s,i)=>`<div class="card slide-in" style="padding:14px;background:${s.bg};border-color:${s.ring};animation-delay:${i*.05}s">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="font-size:11px;color:var(--ink-3);font-weight:600">${s.l}</div>
+        <div style="width:28px;height:28px;border-radius:9px;background:#fff;color:${s.c};display:flex;align-items:center;justify-content:center"><span style="width:16px;height:16px;display:inline-flex">${ICO[s.i]}</span></div>
+      </div>
+      <div class="num" style="font-size:20px;font-weight:800;color:${s.c};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.prefix?`<span style="font-size:14px;opacity:.7;margin-right:1px">${s.prefix}</span>`:''}${cnum(s.n,s.ck)}</div>
+    </div>`).join('')}
+  </div>
+  <!-- Progress hero -->
+  ${target>0?`<div class="hero-mint fade-up" style="margin-bottom:14px;padding:18px 20px">
+    <div style="position:relative">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;gap:10px">
+        <span style="font-size:12px;opacity:.85">เป้า ปี 2569 · ${STATE.users.length} คน</span>
+        <span class="pill pill-ghost" style="font-size:11px;padding:4px 10px">${pct.toFixed(0)}%</span>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+        <span class="num" style="font-size:28px;font-weight:800;letter-spacing:-.8px">${thb(got)}</span>
+        <span style="font-size:12px;opacity:.75">/ ${thb(target)}</span>
+      </div>
+      <div style="height:9px;border-radius:5px;background:rgba(255,255,255,.18);overflow:hidden">
+        <div style="height:100%;width:${pct.toFixed(1)}%;background:linear-gradient(90deg,#F5B638,#FFD56A);border-radius:5px;box-shadow:0 0 12px rgba(245,182,56,.7);transition:width .8s"></div>
+      </div>
+      <div style="margin-top:10px;font-size:11px;opacity:.85">เหลืออีก <b>${thb(target-got)}</b> ก็ถึงเป้า · ${ok.length} รายการยืนยันแล้ว 🚀</div>
+    </div>
+  </div>`:''}
+  <!-- Member matrix -->
+  <div class="card fade-up" style="padding:14px;overflow:hidden">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;gap:10px;flex-wrap:wrap">
+      <div>
+        <div class="label-cap">สถานะรายคน</div>
+        <div style="font-size:14px;font-weight:700;margin-top:2px">${STATE.users.length} คน · ${STATE.expenses.length} รายการ</div>
+      </div>
+      <div style="display:flex;gap:8px;font-size:10px;color:var(--ink-3);flex-wrap:wrap">
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:9px;height:9px;border-radius:2px;background:var(--primary)"></span>ยืนยัน</span>
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:9px;height:9px;border-radius:2px;background:var(--warning)"></span>รอตรวจ</span>
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:9px;height:9px;border-radius:2px;background:rgba(15,46,42,.14)"></span>ยังไม่จ่าย</span>
+      </div>
+    </div>
+    <div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:11px;min-width:280px">
+      <thead><tr style="border-bottom:1px solid var(--border)">
+        <th style="text-align:left;padding:6px 8px;color:var(--ink-3);font-weight:600">ชื่อ</th>
+        ${STATE.expenses.map(e=>`<th style="text-align:center;padding:6px 4px;color:var(--ink-3);font-weight:600;font-size:10px;white-space:nowrap">${esc(e.name.replace(/ ?[📚🛡️🎓].*$/,''))}</th>`).join('')}
+      </tr></thead>
+      <tbody>${sortUsersById(STATE.users).map((u,i)=>`
+        <tr class="slide-in" style="border-bottom:1px solid var(--border);animation-delay:${Math.min(i*.012,.4)}s">
+          <td style="padding:6px 8px;white-space:nowrap">${esc(u.nick || stripPrefix(u.name))}</td>
+          ${STATE.expenses.map(e=>{
+            const p = STATE.payments.find(x=>x.uid===u.id && x.eid===e.id);
+            const c = p?.status==='verified'?'var(--primary)':p?.status==='pending'?'var(--warning)':'rgba(15,46,42,.14)';
+            return `<td style="text-align:center;padding:6px 4px"><span style="display:inline-block;width:13px;height:13px;border-radius:4px;background:${c}"></span></td>`;
+          }).join('')}
+        </tr>`).join('')}
+      </tbody>
+    </table>
+    </div>
+  </div>`;
+}
+
+function renderAdmVerify() {
+  const pend = pendingPays();
+  if (!pend.length) return `<div class="card" style="padding:50px 24px;text-align:center">
+    <div style="display:inline-flex;align-items:center;justify-content:center;width:72px;height:72px;border-radius:50%;background:var(--primary-tint);font-size:34px;margin-bottom:14px">✅</div>
+    <h2 class="h2">ตรวจสอบครบทุกรายการแล้ว!</h2>
+    <p style="font-size:13px;color:var(--ink-3);margin-top:6px">ไม่มีคิวรอตรวจ</p>
+  </div>`;
+  const order = {fake:0, suspicious:1, likely_real:2};
+  const sorted = [...pend].sort((a,b) => (order[a.ai_verdict] ?? 3) - (order[b.ai_verdict] ?? 3));
+  const fakeCount = pend.filter(p => p.ai_verdict==='fake').length;
+  const aiPassIds = pend.filter(p => p.ai_verdict==='likely_real').map(p => p.id);
+
+  const TONES = {
+    likely_real:{bg:'var(--primary-tint)', fg:'#0A6B53', ring:'rgba(15,138,107,.32)', label:'น่าจะจริง', icon:'✓'},
+    suspicious:{bg:'var(--warning-tint)', fg:'#A66A0F', ring:'rgba(232,154,42,.32)', label:'น่าสงสัย', icon:'!'},
+    fake:{bg:'var(--danger-tint)', fg:'#A82B33', ring:'rgba(217,75,83,.32)', label:'ปลอม', icon:'✗'},
+  };
+
+  return `<div style="margin-bottom:14px">
+    <div class="label-cap">คิวรอตรวจ</div>
+    <h1 class="h2" style="margin-top:3px">${pend.length} รายการรอ Admin ยืนยัน</h1>
+  </div>
+  ${!STATE.aiKey?`<div class="card" style="padding:13px 14px;margin-bottom:12px;background:var(--primary-tint);border-color:rgba(15,138,107,.28);display:flex;align-items:center;gap:10px">
+    <span style="font-size:18px">✨</span>
+    <div style="flex:1;font-size:12px;color:var(--primary-deep);line-height:1.55">เปิด <b>Claude API</b> ให้ AI ตรวจสลิปอัตโนมัติ</div>
+    <button class="btn btn-g" style="font-size:11px;padding:6px 10px" onclick="openAiKeyDialog()">ตั้งค่า</button>
+  </div>`:STATE.aiRunning?`<div class="card" style="padding:11px 14px;margin-bottom:12px;background:var(--primary-tint);display:flex;align-items:center;gap:10px">
+    <span class="loader"></span>
+    <span style="font-size:12px;color:var(--primary-deep)">AI กำลังตรวจ...</span>
+  </div>`:''}
+  ${aiPassIds.length>0?`<button class="btn btn-x" style="width:100%;padding:13px;margin-bottom:12px;background:linear-gradient(135deg,#0F8A6B,#0A6B53)" onclick='batchApprove(${JSON.stringify(aiPassIds)})'>
+    ✨ อนุมัติ AI-ผ่านทั้งหมด · ${aiPassIds.length} รายการ
+  </button>`:''}
+  ${fakeCount>0?`<div class="card" style="padding:11px 14px;margin-bottom:12px;background:var(--danger-tint);border-color:rgba(217,75,83,.30);display:flex;align-items:center;gap:10px">
+    <span style="font-size:18px">⚠️</span>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:13px;font-weight:700;color:#A82B33">เจอสลิปต้องสงสัย ${fakeCount} รายการ</div>
+      <div style="font-size:11px;color:#7B2730;margin-top:1px">AI ตรวจเจอ verdict = fake — ตรวจมือ</div>
+    </div>
+  </div>`:''}
+  <div style="display:flex;flex-direction:column;gap:11px">
+    ${sorted.map((p,i) => {
+      const u = STATE.users.find(x=>x.id===p.uid);
+      const e = STATE.expenses.find(x=>x.id===p.eid);
+      const v = p.ai_verdict ? TONES[p.ai_verdict] : null;
+      const conf = typeof p.ai_confidence==='number' ? p.ai_confidence : null;
+      const note = p.ai_note || '';
+      const issues = Array.isArray(p.ai_issues) ? p.ai_issues : [];
+      const aiBlock = v ? `<div style="padding:10px 12px;border-radius:11px;background:${v.bg};margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="width:22px;height:22px;border-radius:50%;background:${v.fg};color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0">${v.icon}</div>
+          <div style="font-size:12px;font-weight:700;color:${v.fg}">AI: ${v.label}</div>
+          ${conf!==null?`<div class="num" style="font-size:11px;font-weight:700;color:${v.fg};margin-left:auto">${conf}%</div>`:''}
+        </div>
+        ${(note||issues.length)?`<div style="font-size:11px;color:var(--ink-2);margin-top:6px;line-height:1.55">${esc(note || issues.map(x=>'· '+x).join(' '))}</div>`:''}
+      </div>` : '';
+      const slip = p.slip ? `<div style="margin-bottom:10px"><img src="${p.slip}" style="max-width:100%;max-height:240px;border-radius:11px;object-fit:contain;border:1px solid var(--border);background:var(--surface-2);cursor:zoom-in" onclick="openSlipZoom('${p.slip}')"/></div>` : '';
+      return `<div class="card slide-in" style="padding:14px;border-color:${v?v.ring:'var(--border)'};animation-delay:${Math.min(i*.04,.4)}s">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          ${avatarHtml(u?.name, 38, 'mint')}
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(u?.nick || stripPrefix(u?.name||''))}</div>
+            <div style="font-size:11px;color:var(--ink-3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(e?.name||'')} · ${fmtDateLong(p.paidAt)}</div>
+          </div>
+          <div class="num-md" style="white-space:nowrap">${thb(e?.amount||0)}</div>
+        </div>
+        ${aiBlock}
+        ${slip}
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-d" style="flex:1;padding:10px;color:var(--danger);border-color:rgba(217,75,83,.32)" onclick="rejectPayment('${p.id}')">${svgIcon('close',14)} ปฏิเสธ</button>
+          <button class="btn btn-p" style="flex:2;padding:10px" onclick="approvePayment('${p.id}')">${svgIcon('check',14)} อนุมัติ ${thb(e?.amount||0)}</button>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+function openAiKeyDialog() {
+  const k = prompt('กรอก Claude API key (sk-ant-...)\nเก็บใน sessionStorage เท่านั้น');
+  if (k === null) return;
+  STATE.aiKey = k.trim();
+  if (k.trim()) sessionStorage.setItem('cf_ai_key', k.trim());
+  else sessionStorage.removeItem('cf_ai_key');
+  render();
+  if (STATE.aiKey) runAiOnPending();
+  showToast(STATE.aiKey ? 'บันทึก key แล้ว ✅' : 'ลบ key แล้ว','info');
+}
+
+function renderAdmExp() {
+  const rows = STATE.expenses.map((e,i) => {
+    const paid = STATE.payments.filter(p=>p.eid===e.id && p.status==='verified').length;
+    return `<div class="card slide-in" style="padding:13px 14px;display:flex;align-items:center;gap:12px;animation-delay:${i*.04}s">
+      ${expIconChip(e.name, 42)}
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(e.name)}</div>
+        ${e.desc?`<div style="font-size:11px;color:var(--ink-3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(e.desc)}</div>`:''}
+        <div class="num" style="font-size:10px;color:var(--ink-3);margin-top:2px">จ่ายแล้ว ${paid}/${STATE.users.length}</div>
+      </div>
+      <div style="text-align:right">
+        <div class="num-sm" style="color:var(--primary-deep);margin-bottom:4px">${thb(e.amount)}</div>
+        <button class="btn btn-d" style="padding:6px 10px;font-size:11px;color:var(--danger);border-color:rgba(217,75,83,.32)" onclick="delExp('${e.id}')">ลบ</button>
+      </div>
+    </div>`;
+  }).join('');
+  return `<div class="card fade-up" style="padding:16px;margin-bottom:14px">
+    <h3 class="h3" style="margin-bottom:11px">➕ เพิ่มรายการ</h3>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <input id="ex-name" placeholder="ชื่อรายการ (เช่น ค่าทัศนศึกษา 🚌)"/>
+      <input id="ex-amt" type="number" placeholder="จำนวนเงิน (บาท)"/>
+      <input id="ex-desc" placeholder="รายละเอียด (ไม่บังคับ)"/>
+      <button class="btn btn-p" onclick="addExp()">เพิ่มรายการ</button>
+    </div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:10px">${rows||'<div style="text-align:center;padding:32px;color:var(--ink-3)">ยังไม่มีรายการ</div>'}</div>`;
+}
+
+function renderAdmMembers() {
+  const us = sortUsersById(STATE.users);
+  const editId = STATE.editMbId;
+  const rows = us.map((u,i) => {
+    const cnt = STATE.payments.filter(p=>p.uid===u.id && p.status==='verified').length;
+    if (editId === u.id) {
+      return `<div class="card fade-up" style="padding:14px;border-color:var(--primary)">
+        <div style="font-size:12px;color:var(--primary-deep);font-weight:600;margin-bottom:8px">✏️ แก้ไขข้อมูล</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <input id="edit-name-${u.id}" value="${esc(u.name)}" placeholder="ชื่อ-นามสกุล"/>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <input id="edit-nick-${u.id}" value="${esc(u.nick||'')}" placeholder="ชื่อเล่น"/>
+            <input id="edit-pin-${u.id}" value="${esc(u.pin||'')}" placeholder="รหัสนักเรียน" maxlength="6"/>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-p" style="flex:1;font-size:13px" onclick="saveEditUser('${u.id}')">💾 บันทึก</button>
+            <button class="btn btn-g" style="flex:1;font-size:13px" onclick="setState({editMbId:null})">ยกเลิก</button>
+          </div>
+          <button onclick="resetUserPay('${u.id}')" style="background:var(--danger-tint);color:var(--danger);border:1px solid rgba(217,75,83,.32);padding:9px;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer">🗑️ ล้างประวัติการจ่ายของคนนี้</button>
+        </div>
+      </div>`;
+    }
+    return `<div class="card slide-in" style="padding:10px 12px;display:flex;align-items:center;gap:11px;animation-delay:${Math.min(i*.015,.3)}s">
+      ${avatarHtml(u.name, 36, 'cream')}
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(stripPrefix(u.name))} ${u.nick?`<span style="color:var(--ink-3);font-weight:400;font-size:11px">(${esc(u.nick)})</span>`:''}</div>
+        <div class="num" style="font-size:10px;color:var(--ink-3);margin-top:1px">รหัส ${esc(u.pin||'-')} · จ่าย ${cnt} รายการ</div>
+      </div>
+      <button class="btn btn-g" style="padding:6px 10px;font-size:11px" onclick="setState({editMbId:'${u.id}'})">แก้</button>
+      <button class="btn btn-g" style="padding:6px 10px;font-size:11px;color:var(--danger);border-color:rgba(217,75,83,.28)" onclick="delUser('${u.id}')">ลบ</button>
+    </div>`;
+  }).join('');
+  return `<div class="card fade-up" style="padding:16px;margin-bottom:14px">
+    <h3 class="h3" style="margin-bottom:11px">➕ เพิ่มสมาชิก</h3>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <input id="mb-name" placeholder="ชื่อ-นามสกุล"/>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <input id="mb-nick" placeholder="ชื่อเล่น"/>
+        <input id="mb-pin" placeholder="รหัสนักเรียน" maxlength="6"/>
+      </div>
+      <button class="btn btn-p" onclick="addUser()">เพิ่มสมาชิก</button>
+    </div>
+  </div>
+  <div style="font-size:12px;color:var(--ink-3);margin-bottom:8px">สมาชิก <b class="num" style="color:var(--primary-deep)">${us.length}</b> คน</div>
+  <div style="display:flex;flex-direction:column;gap:8px">${rows}</div>`;
+}
+
+function renderAdmQR() {
+  return `<div style="max-width:440px;margin:0 auto">
+    <div class="card fade-up" style="padding:22px;text-align:center">
+      <div class="label-cap" style="margin-bottom:4px">QR สำหรับรับเงินจากเพื่อน</div>
+      <h3 class="h2" style="margin-bottom:6px">📱 QR Code พร้อมเพย์</h3>
+      <p style="font-size:12px;color:var(--ink-3);margin-bottom:18px;line-height:1.55">นักเรียนจะเห็น QR นี้เมื่อกดจ่ายเงิน</p>
+      ${STATE.qr ? `<div style="display:inline-block;padding:12px;background:#fff;border-radius:18px;margin-bottom:14px;box-shadow:0 0 0 4px rgba(15,138,107,.12),0 16px 32px -12px rgba(15,138,107,.28)">
+        <img src="${STATE.qr}" style="max-width:220px;max-height:220px;display:block;border-radius:10px;object-fit:contain"/>
+      </div>
+      <div style="font-weight:700;font-size:14px;margin-bottom:3px">${esc(RECEIVER_NAME)}</div>
+      <div class="num" style="font-size:11px;color:var(--ink-3);margin-bottom:18px;letter-spacing:.3px">Thai PromptPay</div>
+      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+        <button class="btn btn-p" style="padding:9px 18px;font-size:13px" onclick="document.getElementById('qr-inp').click()">📷 เปลี่ยน QR</button>
+        <button class="btn btn-g" style="padding:9px 18px;font-size:13px;color:var(--danger);border-color:rgba(217,75,83,.28)" onclick="clearQR()">ลบ</button>
+      </div>` : `<div onclick="document.getElementById('qr-inp').click()" style="border:2px dashed var(--border-strong);border-radius:14px;padding:46px 22px;cursor:pointer">
+        <div style="font-size:42px;margin-bottom:10px">📱</div>
+        <div style="font-weight:600;font-size:14px;margin-bottom:4px">อัปโหลด QR Code</div>
+        <div style="font-size:11px;color:var(--ink-3)">รองรับ PNG, JPG</div>
+      </div>`}
+      <input id="qr-inp" type="file" accept="image/*" onchange="uploadQR(this)" style="display:none"/>
+    </div>
+    <div class="card fade-up" style="padding:16px;margin-top:12px;background:var(--primary-tint);border-color:rgba(15,138,107,.22)">
+      <div style="font-size:12px;font-weight:700;color:var(--primary-deep);margin-bottom:6px">✨ AI ตรวจสลิป</div>
+      <div style="font-size:12px;color:var(--ink-2);line-height:1.6;margin-bottom:10px">${STATE.aiKey?'เปิดอยู่ — Claude จะตรวจสลิปอัตโนมัติเมื่อเปิดแท็บ "สลิป"':'ยังไม่ได้ตั้ง Claude API key'}</div>
+      <button class="btn btn-g" onclick="openAiKeyDialog()">${STATE.aiKey?'เปลี่ยน key':'ตั้งค่า key'}</button>
+    </div>
+  </div>`;
+}
+
+function renderAdmBalance() {
+  const got = totalVerified();
+  const grand = STATE.savedBalance + got;
+  return `<div style="max-width:440px;margin:0 auto">
+    <div class="card fade-up" style="padding:22px">
+      <h3 class="h2" style="margin-bottom:18px;text-align:center">💵 ยอดเงินสะสม</h3>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
+        <div style="background:var(--accent-tint);border:1px solid rgba(245,182,56,.28);border-radius:14px;padding:18px;text-align:center">
+          <div style="font-size:11px;color:var(--ink-3);margin-bottom:4px">ยอดสะสม ปี 2568 (ยกมา)</div>
+          <div class="num" style="font-size:28px;font-weight:800;color:#D69A1F">${thb(STATE.savedBalance)}</div>
+        </div>
+        <div style="background:var(--primary-tint);border:1px solid rgba(15,138,107,.22);border-radius:14px;padding:18px;text-align:center">
+          <div style="font-size:11px;color:var(--ink-3);margin-bottom:4px">เก็บได้ ปี 2569 (ยืนยันแล้ว)</div>
+          <div class="num" style="font-size:28px;font-weight:800;color:var(--primary)">${thb(got)}</div>
+        </div>
+        <div style="background:linear-gradient(135deg,#0F8A6B,#0A6B53);color:#fff;border-radius:14px;padding:18px;text-align:center">
+          <div style="font-size:11px;opacity:.85;margin-bottom:4px">รวมในกระเป๋าทั้งหมด</div>
+          <div class="num" style="font-size:30px;font-weight:800">${thb(grand)}</div>
+        </div>
+      </div>
+      <h4 style="font-size:13px;font-weight:600;margin-bottom:10px;color:var(--ink-2)">✏️ แก้ไขยอดสะสม ปี 2568</h4>
+      <div style="display:flex;gap:8px">
+        <input id="bal-inp" type="number" value="${STATE.savedBalance}"/>
+        <button class="btn btn-p" onclick="updateBal()" style="white-space:nowrap">บันทึก</button>
+      </div>
+    </div>
+  </div>`;
+}
+function renderDesktopAdmin() {
+  const r = STATE.route;
+  let tab = 'ov';
+  if (r === '#/a/vr') tab = 'vr';
+  else if (r === '#/a/ex') tab = 'ex';
+  else if (r === '#/a/mb') tab = 'mb';
+  else if (r === '#/a/qr') tab = 'qr';
+  else if (r === '#/a/bl') tab = 'bl';
+  let body, title, eyebrow, action='';
+  const pend = pendingPays().length;
+  if (tab === 'ov') { body = renderAdmOverview(); title='ภาพรวม'; eyebrow='Dashboard'; }
+  else if (tab === 'vr') { body = renderDesktopAdmVerify(); title='ตรวจสลิป'; eyebrow=`${pend} รายการรอ`; }
+  else if (tab === 'ex') { body = renderAdmExp(); title='รายการเก็บเงิน'; eyebrow='Expenses'; }
+  else if (tab === 'mb') { body = renderAdmMembers(); title='สมาชิกห้อง'; eyebrow=`${STATE.users.length} คน`; }
+  else if (tab === 'qr') { body = renderAdmQR(); title='QR PromptPay'; eyebrow='Receive QR'; }
+  else if (tab === 'bl') { body = renderAdmBalance(); title='ยอดเงิน'; eyebrow='Balance'; }
+  return renderDesktopShell({nav:'admin', activeNav:tab, body, title, eyebrow, action});
+}
+
+function renderDesktopUser() {
+  const r = STATE.route;
+  let tab = 'home';
+  if (r.startsWith('#/u/pay')) tab = 'pay';
+  else if (r === '#/u/chart') tab = 'chart';
+  else if (r === '#/u/lb') tab = 'lb';
+  let body, title, eyebrow;
+  if (tab === 'pay') { body = renderDesktopUserPay(); title='จ่ายเงิน'; eyebrow='Payment'; }
+  else if (tab === 'chart') { body = renderMobileChart(); title='สถิติ'; eyebrow='Statistics'; }
+  else if (tab === 'lb') { body = renderDesktopLeaderboard(); title='อันดับห้อง'; eyebrow='Leaderboard'; }
+  else { body = renderDesktopUserHome(); title='หน้าหลัก'; eyebrow='Home'; }
+  if (tab === 'chart') body = `<div style="max-width:780px;margin:0 auto">
+    <style>.d-content .m-topbar{display:none}.d-content .m-main{padding:0 !important;max-width:none !important}</style>
+    ${body}
+  </div>`;
+  return renderDesktopShell({nav:'user', activeNav:tab, body, title, eyebrow});
+}
+
+function renderDesktopShell({nav, activeNav, body, title, eyebrow, action=''}) {
+  const u = STATE.session?.role==='user' ? STATE.users.find(x=>x.id===STATE.session.uid) : null;
+  const pend = pendingPays().length;
+  const adminItems = [
+    {k:'ov', l:'ภาพรวม', i:'home', h:'#/a/ov'},
+    {k:'vr', l:'ตรวจสลิป', i:'check', h:'#/a/vr', badge:pend},
+    {k:'ex', l:'รายการ', i:'receipt', h:'#/a/ex'},
+    {k:'mb', l:'สมาชิก', i:'users', h:'#/a/mb'},
+    {k:'qr', l:'QR Code', i:'qr', h:'#/a/qr'},
+    {k:'bl', l:'ยอดเงิน', i:'cash', h:'#/a/bl'},
+  ];
+  const userItems = [
+    {k:'home', l:'หน้าหลัก', i:'home', h:'#/u/home'},
+    {k:'pay', l:'จ่ายเงิน', i:'send', h:'#/u/pay'},
+    {k:'chart', l:'สถิติ', i:'chart', h:'#/u/chart'},
+    {k:'lb', l:'อันดับ', i:'trophy', h:'#/u/lb'},
+  ];
+  const items = nav==='admin' ? adminItems : userItems;
+  const isAdmin = nav==='admin';
+  return `<div class="d-shell">
+    <aside class="d-sidebar">
+      <div class="d-brand">
+        <div class="d-brand-logo">🏦</div>
+        <div style="min-width:0">
+          <div class="num" style="font-size:13px;font-weight:800;letter-spacing:1.5px;background:linear-gradient(135deg,#0F8A6B,#0A6B53);-webkit-background-clip:text;-webkit-text-fill-color:transparent">CLASS FUND</div>
+          <div style="font-size:11px;color:var(--ink-3);margin-top:2px">${esc(CLASS_NAME)}</div>
+        </div>
+      </div>
+      <nav class="d-nav">
+        ${items.map(it=>`<button class="${activeNav===it.k?'on':''}" onclick="${it.k==='pay'&&nav==='user'?'startPayWizard()':`navigate('${it.h}')`}">
+          ${svgIcon(it.i,18)} <span>${it.l}</span>
+          ${it.badge?`<span class="d-nav-badge">${it.badge}</span>`:''}
+        </button>`).join('')}
+      </nav>
+      <div class="d-user-card">
+        ${isAdmin ? `<div style="width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,rgba(245,182,56,.22),rgba(245,182,56,.08));border:1px solid rgba(245,182,56,.32);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">👑</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(ADMIN_NAME)} · เหรัญญิก</div>
+          <div style="font-size:11px;color:var(--ink-3)">Admin</div>
+        </div>` : u ? `${avatarHtml(u.name,36,'mint')}
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(u.nick || stripPrefix(u.name))}</div>
+          <div style="font-size:11px;color:var(--ink-3)">PIN ${esc(u.pin||'-')}</div>
+        </div>` : ''}
+        <button class="btn-g" style="width:30px;height:30px;padding:0;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--danger);flex-shrink:0" onclick="logout()" title="ออกจากระบบ">${svgIcon('close',14)}</button>
+      </div>
+    </aside>
+    <main class="d-main">
+      <header class="d-topbar">
+        <div>
+          <div class="label-cap">${esc(eyebrow||'')}</div>
+          <h1>${esc(title||'')}</h1>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          ${isAdmin && pend>0 ? `<span class="pill pill-amber" style="padding:6px 12px">${pend} รอตรวจ</span>` : ''}
+          ${action}
+        </div>
+      </header>
+      <section class="d-content fade-up">${body}</section>
+    </main>
+  </div>`;
+}
+
+function renderDesktopUserHome() {
+  const uid = STATE.session?.uid;
+  const u = STATE.users.find(x=>x.id===uid);
+  if (!u) return '';
+  const mine = STATE.payments.filter(p=>p.uid===uid);
+  const ok = mine.filter(p=>p.status==='verified').length;
+  const target = totalTarget();
+  const got = totalVerified();
+  const grand = STATE.savedBalance + got;
+  const pct = target>0 ? Math.min(100, got/target*100) : 0;
+  const unpaid = STATE.expenses.filter(e => !mine.find(p=>p.eid===e.id));
+  const owedTotal = unpaid.reduce((s,e)=>s+e.amount, 0);
+  const board = calcBoard(STATE.users, STATE.payments);
+  const rank = board.findIndex(b=>b.id===uid)+1;
+  return `<div style="display:grid;grid-template-columns:1fr 380px;gap:24px;align-items:start">
+    <div>
+      <div class="hero-mint fade-up" style="margin-bottom:18px;padding:28px">
+        <div style="position:relative">
+          <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;opacity:.85;margin-bottom:6px">
+            <span>ในกระเป๋าห้อง</span>
+            <span class="pill pill-ghost" style="font-size:11px">+${thb(got)} ปีนี้</span>
+          </div>
+          <div class="num-hero" style="font-size:54px">
+            <span style="font-size:28px;font-weight:500;margin-right:4px;opacity:.85">฿</span>${thbb(grand)}
+          </div>
+          <div style="margin-top:18px;padding-top:14px;border-top:1px solid rgba(255,255,255,.16)">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+              <span style="font-size:12px;opacity:.85">เป้า ปี 2569 · ${STATE.users.length} คน</span>
+              <span class="num" style="font-size:14px;font-weight:700">${pct.toFixed(0)}%</span>
+            </div>
+            <div style="height:10px;background:rgba(255,255,255,.18);border-radius:5px;overflow:hidden">
+              <div style="height:100%;width:${pct.toFixed(1)}%;background:linear-gradient(90deg,#F5B638,#FFD56A);border-radius:5px;box-shadow:0 0 14px rgba(245,182,56,.7);transition:width .8s"></div>
+            </div>
+            <div style="margin-top:8px;font-size:12px;opacity:.85"><b class="num">${thb(got)}</b> / ${thb(target)}</div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px">
+        <div>
+          <div class="label-cap">คุณต้องจ่าย</div>
+          <div class="h2" style="margin-top:2px">${unpaid.length===0?'จ่ายครบทุกอย่างแล้ว 🎉':`ค้าง ${unpaid.length} รายการ`}</div>
+        </div>
+        ${unpaid.length>0?`<div class="num" style="font-size:24px;font-weight:800;color:var(--primary-deep)">${thb(owedTotal)}</div>`:''}
+      </div>
+      <div class="card" style="padding:8px">
+        ${STATE.expenses.map((e,i)=>{
+          const p = mine.find(x=>x.eid===e.id);
+          const isOk = p?.status==='verified';
+          const isPending = p?.status==='pending';
+          const emoji = (e.name.match(/[📚🛡️🎓🏦💵🎯🎁🎉]/)||['💰'])[0];
+          return `<div class="slide-in" style="padding:14px 14px;display:flex;align-items:center;gap:14px;border-bottom:${i<STATE.expenses.length-1?'1px solid var(--border)':'none'};animation-delay:${i*.04}s">
+            <div style="width:46px;height:46px;border-radius:13px;background:${isOk?'var(--primary-tint)':isPending?'var(--warning-tint)':'var(--surface-2)'};display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">${emoji}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:600;font-size:15px">${esc(e.name.replace(/ ?[📚🛡️🎓].*$/,''))}</div>
+              <div style="font-size:12px;color:var(--ink-3);margin-top:2px">${isOk?'✓ จ่ายแล้ว':isPending?'⏳ รอ Admin ตรวจ':'ยังไม่จ่าย'}</div>
+            </div>
+            <div style="text-align:right">
+              <div class="num-md" style="color:${isOk?'var(--primary-deep)':'var(--ink)'};${isOk?'text-decoration:line-through;opacity:.7':''}">${thb(e.amount)}</div>
+              ${isOk?`<div style="margin-top:3px;color:var(--primary);font-size:12px;font-weight:600;display:flex;align-items:center;gap:4px;justify-content:flex-end">${svgIcon('check',14)} ครบ</div>`:''}
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+      ${unpaid.length>0?`<button class="btn btn-x" style="width:100%;padding:16px;margin-top:14px;font-size:15px" onclick="startPayWizard()">
+        💸 จ่ายทั้งหมด ${thb(owedTotal)}
+      </button>`:''}
+    </div>
+    <aside style="position:sticky;top:96px">
+      <div class="card fade-up" style="padding:18px;margin-bottom:14px">
+        <div class="label-cap" style="margin-bottom:10px">อันดับของคุณ</div>
+        <div style="display:flex;align-items:center;gap:14px">
+          ${avatarHtml(u.name, 56, 'mint')}
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:700;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(u.nick || stripPrefix(u.name))}</div>
+            <div class="num" style="font-size:11px;color:var(--ink-3);margin-top:2px">จ่าย ${ok}/${STATE.expenses.length} รายการ</div>
+          </div>
+          <div class="num" style="font-size:32px;font-weight:800;color:var(--primary-deep)">#${rank||'-'}</div>
+        </div>
+      </div>
+      <div class="card fade-up" style="padding:18px">
+        <div class="label-cap" style="margin-bottom:10px">เพื่อนจ่ายล่าสุด</div>
+        ${STATE.payments.filter(p=>p.status==='verified').slice(-5).reverse().map(p=>{
+          const uu = STATE.users.find(x=>x.id===p.uid);
+          const ee = STATE.expenses.find(x=>x.id===p.eid);
+          return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+            ${avatarHtml(uu?.name, 32, 'cream')}
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(uu?.nick||stripPrefix(uu?.name||''))}</div>
+              <div style="font-size:11px;color:var(--ink-3)">${esc((ee?.name||'').replace(/ ?[📚🛡️🎓].*$/,''))} · ${fmtDate(p.paidAt)}</div>
+            </div>
+            <div class="num-sm" style="color:var(--primary-deep)">${thb(ee?.amount||0)}</div>
+          </div>`;
+        }).join('') || '<div style="text-align:center;padding:20px;color:var(--ink-3);font-size:13px">ยังไม่มี</div>'}
+      </div>
+    </aside>
+  </div>`;
+}
+
+function renderDesktopUserPay() {
+  return `<div style="max-width:760px;margin:0 auto">
+    <style>.d-content .m-topbar{position:static !important;border:none !important;padding:0 !important;background:transparent !important;margin-bottom:14px}.d-content .m-main{padding:0 !important;max-width:none !important}.d-content [style*="position:fixed"][style*="bottom:0"]{position:static !important;padding:18px 0 0 !important;background:none !important}</style>
+    ${renderMobilePay()}
+  </div>`;
+}
+
+function renderDesktopLeaderboard() {
+  // Reuse mobile leaderboard layout but constrained
+  return `<div style="max-width:920px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:24px">
+    ${renderLeaderboardPodium()}
+    ${renderLeaderboardList()}
+  </div>`;
+}
+
+function renderLeaderboardPodium() {
+  const board = calcBoard(STATE.users, STATE.payments);
+  const total = STATE.expenses.length || 1;
+  const MEDAL = ['🥇','🥈','🥉'];
+  const PODIUM = [
+    {idx:1, h:140, col:'#C0C0C8', tone:'linear-gradient(180deg,#D8DCE3,#B0B5BD)', bg:'rgba(192,192,200,.18)'},
+    {idx:0, h:180, col:'#F5B638', tone:'linear-gradient(180deg,#F5B638,#D69A1F)', bg:'rgba(245,182,56,.22)'},
+    {idx:2, h:110, col:'#CD7F32', tone:'linear-gradient(180deg,#D9B68A,#A56A2C)', bg:'rgba(205,127,50,.18)'},
+  ];
+  return `<div style="padding:36px 22px 0;border-radius:22px;background:linear-gradient(180deg,rgba(245,182,56,.16) 0%,rgba(245,182,56,.02) 70%,transparent);overflow:hidden;position:relative">
+    <div style="position:absolute;top:14px;left:30px;font-size:16px;opacity:.5">✨</div>
+    <div style="position:absolute;top:40px;right:36px;font-size:13px;opacity:.5">✨</div>
+    <div style="position:absolute;top:80px;left:42%;font-size:11px;opacity:.55">✨</div>
+    <div style="text-align:center;margin-bottom:18px">
+      <div class="label-cap">PODIUM</div>
+      <div class="h2" style="margin-top:2px">3 อันดับแรก 🏆</div>
+    </div>
+    <div style="display:flex;align-items:flex-end;justify-content:center;gap:14px">
+      ${PODIUM.map(p=>{
+        const u = board[p.idx];
+        if (!u) return '<div style="flex:1"></div>';
+        const isFirst = p.idx===0;
+        return `<div class="fade-up" style="flex:1;display:flex;flex-direction:column;align-items:center;animation-delay:${p.idx*.1}s">
+          ${isFirst?`<div style="font-size:34px;animation:crownBob 1.8s ease-in-out infinite;margin-bottom:4px">👑</div>`:''}
+          <div style="position:relative;margin-bottom:10px">
+            <div style="width:${isFirst?72:60}px;height:${isFirst?72:60}px;border-radius:50%;background:${p.bg};color:${p.col};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:${isFirst?28:22}px;border:3px solid #fff;box-shadow:0 8px 18px rgba(15,46,42,.14)${isFirst?',0 0 36px rgba(245,182,56,.6)':''}">${esc(initial(u.name))}</div>
+            <div style="position:absolute;bottom:-4px;right:-4px;width:26px;height:26px;border-radius:50%;background:${p.col};border:3px solid #fff;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:800">${p.idx+1}</div>
+          </div>
+          <div style="font-size:14px;font-weight:700">${esc(u.nick || firstName(u.name))}</div>
+          <div class="num" style="font-size:12px;color:var(--ink-3);margin-top:2px">${u.cnt}/${total}</div>
+          <div style="margin-top:10px;width:100%;height:${p.h}px;background:${p.tone};border-radius:16px 16px 0 0;display:flex;align-items:flex-start;justify-content:center;padding:16px 0;color:#fff;font-size:${isFirst?32:24}px;${isFirst?'box-shadow:0 14px 28px -10px rgba(245,182,56,.6),inset 0 1px 0 rgba(255,255,255,.32)':''}">${MEDAL[p.idx]}</div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+}
+
+function renderLeaderboardList() {
+  const board = calcBoard(STATE.users, STATE.payments);
+  const total = STATE.expenses.length || 1;
+  const me = STATE.session?.uid;
+  const myIdx = me ? board.findIndex(b=>b.id===me) : -1;
+  const myCard = (myIdx>=0 && me) ? `<div class="hero-mint fade-up" style="padding:16px 18px;margin-bottom:14px;display:flex;align-items:center;gap:14px">
+    <div class="num" style="font-size:32px;font-weight:800;min-width:54px;text-align:center">#${myIdx+1}</div>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:12px;opacity:.86">อันดับของคุณ</div>
+      <div style="font-size:15px;font-weight:600">${esc(board[myIdx].nick || stripPrefix(board[myIdx].name))} · จ่าย ${board[myIdx].cnt}/${total}</div>
+    </div>
+    ${myIdx<3?`<div style="font-size:28px">${['🥇','🥈','🥉'][myIdx]}</div>`:''}
+  </div>` : '';
+  return `<div>
+    ${myCard}
+    <div class="card" style="overflow:hidden">
+      <div style="padding:14px 16px 8px"><div class="label-cap">อันดับทั้งหมด</div></div>
+      ${board.map((u,i)=>{
+        const isMe = u.id===me;
+        const maxCnt = STATE.expenses.length || 1;
+        const pct = (u.cnt/maxCnt)*100;
+        return `<div class="slide-in" style="display:flex;align-items:center;gap:11px;padding:10px 16px;border-bottom:${i<board.length-1?'1px solid var(--border)':'none'};${isMe?'background:var(--primary-tint)':''};animation-delay:${Math.min(i*.012,.4)}s">
+          <div class="num" style="font-size:13px;font-weight:800;color:${isMe?'var(--primary-deep)':i<3?'var(--accent-deep)':'var(--ink-3)'};width:32px;text-align:center">#${i+1}</div>
+          ${avatarHtml(u.name, 34, isMe?'mint':'cream')}
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(u.nick || stripPrefix(u.name))}${isMe?' <span style="color:var(--primary-deep);font-size:11px">· คุณ</span>':''}</div>
+            <div style="margin-top:4px;height:5px;background:rgba(15,46,42,.07);border-radius:3px;overflow:hidden;max-width:160px">
+              <div style="height:100%;width:${pct.toFixed(0)}%;background:var(--primary);border-radius:3px"></div>
+            </div>
+          </div>
+          <div class="num" style="font-size:12px;font-weight:700;color:${u.cnt>0?(isMe?'var(--primary-deep)':'var(--ink-2)'):'var(--ink-3)'}">${u.cnt}/${total}</div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+}
+
+function renderDesktopAdmVerify() {
+  const pend = pendingPays();
+  if (!pend.length) return `<div class="card" style="padding:80px 24px;text-align:center">
+    <div style="display:inline-flex;align-items:center;justify-content:center;width:90px;height:90px;border-radius:50%;background:var(--primary-tint);font-size:42px;margin-bottom:16px">✅</div>
+    <h2 class="h2">ตรวจสอบครบทุกรายการแล้ว!</h2>
+    <p style="font-size:14px;color:var(--ink-3);margin-top:8px">ไม่มีคิวรอตรวจในขณะนี้</p>
+  </div>`;
+  const order = {fake:0, suspicious:1, likely_real:2};
+  const sorted = [...pend].sort((a,b)=>(order[a.ai_verdict]??3)-(order[b.ai_verdict]??3));
+  const fakeCount = pend.filter(p=>p.ai_verdict==='fake').length;
+  const aiPassIds = pend.filter(p=>p.ai_verdict==='likely_real').map(p=>p.id);
+  const selId = STATE.selectedSlipId || sorted[0]?.id;
+  const sel = sorted.find(p=>p.id===selId) || sorted[0];
+  const u = sel ? STATE.users.find(x=>x.id===sel.uid) : null;
+  const e = sel ? STATE.expenses.find(x=>x.id===sel.eid) : null;
+  const TONES = {
+    likely_real:{bg:'var(--primary-tint)', fg:'#0A6B53', border:'rgba(15,138,107,.3)', label:'น่าจะจริง', icon:'✓'},
+    suspicious:{bg:'var(--warning-tint)', fg:'#A66A0F', border:'rgba(232,154,42,.32)', label:'น่าสงสัย', icon:'!'},
+    fake:{bg:'var(--danger-tint)', fg:'#A82B33', border:'rgba(217,75,83,.32)', label:'ปลอม', icon:'✗'},
+  };
+  const v = sel?.ai_verdict ? TONES[sel.ai_verdict] : null;
+  const conf = typeof sel?.ai_confidence==='number' ? sel.ai_confidence : null;
+
+  return `<div>
+    ${aiPassIds.length>0?`<button class="btn btn-x" style="margin-bottom:14px;padding:12px 22px;background:linear-gradient(135deg,#0F8A6B,#0A6B53)" onclick='batchApprove(${JSON.stringify(aiPassIds)})'>
+      ✨ อนุมัติ AI-ผ่านทั้งหมด · ${aiPassIds.length} รายการ
+    </button>`:''}
+    ${fakeCount>0?`<div class="card" style="padding:14px 16px;margin-bottom:14px;background:var(--danger-tint);border-color:rgba(217,75,83,.3);display:flex;align-items:center;gap:12px">
+      <span style="font-size:22px">⚠️</span>
+      <div style="flex:1">
+        <div style="font-weight:700;color:#A82B33">เจอสลิปต้องสงสัย ${fakeCount} รายการ</div>
+        <div style="font-size:12px;color:#7B2730;margin-top:2px">AI ตรวจเจอ verdict = fake — แนะนำตรวจมือ</div>
+      </div>
+    </div>`:''}
+    ${!STATE.aiKey?`<div class="card" style="padding:14px 16px;margin-bottom:14px;background:var(--primary-tint);border-color:rgba(15,138,107,.28);display:flex;align-items:center;gap:12px">
+      <span style="font-size:22px">✨</span>
+      <div style="flex:1">
+        <div style="font-weight:700;color:var(--primary-deep)">ตั้ง Claude API key เพื่อให้ AI ตรวจอัตโนมัติ</div>
+        <div style="font-size:12px;color:var(--ink-2);margin-top:2px">ลดเวลาตรวจสลิป · AI จะตรวจยอด/ผู้รับ/วันที่ ให้คุณ</div>
+      </div>
+      <button class="btn btn-g" onclick="openAiKeyDialog()">ตั้งค่า</button>
+    </div>`:STATE.aiRunning?`<div class="card" style="padding:11px 14px;margin-bottom:14px;background:var(--primary-tint);display:flex;align-items:center;gap:10px">
+      <span class="loader"></span>
+      <span style="font-size:13px;color:var(--primary-deep)">AI กำลังตรวจสลิปที่เหลือ...</span>
+    </div>`:''}
+    <div style="display:grid;grid-template-columns:340px 1fr;gap:20px;align-items:start">
+      <!-- LEFT: queue -->
+      <div class="card" style="padding:6px;max-height:calc(100vh - 240px);overflow-y:auto;position:sticky;top:96px">
+        ${sorted.map((p,i)=>{
+          const uu = STATE.users.find(x=>x.id===p.uid);
+          const ee = STATE.expenses.find(x=>x.id===p.eid);
+          const isSel = p.id===selId;
+          const vv = p.ai_verdict ? TONES[p.ai_verdict] : null;
+          return `<div class="slide-in" style="padding:10px 12px;border-radius:12px;cursor:pointer;display:flex;align-items:center;gap:10px;${isSel?'background:var(--primary-tint);border:1.5px solid var(--primary)':'border:1.5px solid transparent'};margin-bottom:4px;animation-delay:${Math.min(i*.025,.3)}s" onclick="setState({selectedSlipId:'${p.id}'})">
+            ${avatarHtml(uu?.name, 36, isSel?'mint':'cream')}
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(uu?.nick||stripPrefix(uu?.name||''))}</div>
+              <div style="font-size:11px;color:var(--ink-3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc((ee?.name||'').replace(/ ?[📚🛡️🎓].*$/,''))} · ${fmtDate(p.paidAt)}</div>
+            </div>
+            ${vv?`<div style="width:22px;height:22px;border-radius:50%;background:${vv.fg};color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0">${vv.icon}</div>`:''}
+          </div>`;
+        }).join('')}
+      </div>
+      <!-- RIGHT: detail -->
+      ${sel ? `<div class="card fade-up" style="padding:20px">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px">
+          ${avatarHtml(u?.name, 56, 'mint')}
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:700;font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(u?.nick||stripPrefix(u?.name||''))}</div>
+            <div style="font-size:12px;color:var(--ink-3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(stripPrefix(u?.name||''))} · ${esc(e?.name||'')} · ${fmtDateLong(sel.paidAt)}</div>
+          </div>
+          <div class="num" style="font-size:30px;font-weight:800;color:var(--primary-deep)">${thb(e?.amount||0)}</div>
+        </div>
+        <div style="display:grid;grid-template-columns:340px 1fr;gap:18px;align-items:start">
+          <div>
+            ${sel.slip ? `<img src="${sel.slip}" style="width:100%;max-height:480px;border-radius:12px;border:1px solid var(--border);background:var(--surface-2);object-fit:contain;cursor:zoom-in" onclick="openSlipZoom('${sel.slip}')"/>` : `<div style="padding:80px 20px;text-align:center;background:var(--surface-2);border-radius:12px;color:var(--ink-3)">ไม่มีรูปสลิป</div>`}
+          </div>
+          <div>
+            ${v ? `<div style="padding:16px 18px;border-radius:14px;background:${v.bg};border:1px solid ${v.border};margin-bottom:14px">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+                <div style="width:30px;height:30px;border-radius:50%;background:${v.fg};color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800">${v.icon}</div>
+                <div style="font-size:14px;font-weight:700;color:${v.fg}">AI: ${v.label}</div>
+                ${conf!==null?`<div class="num" style="font-size:16px;font-weight:800;color:${v.fg};margin-left:auto">${conf}%</div>`:''}
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">
+                ${[['ยอด',sel.ai_amount_ok ?? null],['ผู้รับ',sel.ai_recipient_ok ?? null],['วันที่',sel.ai_date_ok ?? null],['สลิป',true]].map(([l,ok])=>`<div style="background:#fff;padding:6px 10px;border-radius:8px;display:flex;align-items:center;gap:6px;font-size:12px">
+                  <span style="color:${ok===true?'var(--primary)':ok===false?'var(--danger)':'var(--ink-3)'}">${ok===true?'✓':ok===false?'✗':'?'}</span>
+                  <span style="color:var(--ink-2)">${l}</span>
+                </div>`).join('')}
+              </div>
+              ${sel.ai_note?`<div style="font-size:12px;color:var(--ink-2);line-height:1.6">${esc(sel.ai_note)}</div>`:''}
+            </div>` : !STATE.aiKey ? '' : `<div style="padding:14px;border-radius:12px;background:var(--surface-2);text-align:center;margin-bottom:14px;color:var(--ink-3);font-size:13px">${STATE.aiRunning?'<span class="loader" style="vertical-align:middle"></span> AI กำลังตรวจ...':'รอ AI ตรวจ'}</div>`}
+            <div style="display:flex;gap:10px">
+              <button class="btn btn-d" style="flex:1;padding:14px;color:var(--danger);border-color:rgba(217,75,83,.32)" onclick="rejectPayment('${sel.id}')">${svgIcon('close',16)} ปฏิเสธ</button>
+              <button class="btn btn-p" style="flex:2;padding:14px" onclick="approvePayment('${sel.id}')">${svgIcon('check',16)} อนุมัติ ${thb(e?.amount||0)}</button>
+            </div>
+          </div>
+        </div>
+      </div>` : ''}
+    </div>
+  </div>`;
+}
+
+initApp();
+</script>
+</body>
+</html>
