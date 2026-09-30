@@ -175,9 +175,49 @@ input::placeholder,textarea::placeholder{color:rgba(15,46,42,.32)}
 .numpad button:active{transform:scale(.94);background:var(--surface-2)}
 .numpad button.act{background:linear-gradient(135deg,#0F8A6B,#0A6B53);color:#fff;box-shadow:0 6px 16px rgba(15,138,107,.32)}
 .numpad button.back{background:transparent;border-color:transparent;color:var(--ink-3);font-size:18px}
-.pin-dots{display:flex;gap:14px;justify-content:center;margin:8px 0 26px}
-.pin-dots > div{width:18px;height:18px;border-radius:50%;background:transparent;border:2px solid var(--border-strong);transition:all .2s}
-.pin-dots > div.f{background:var(--primary);border-color:var(--primary);transform:scale(1.1);box-shadow:0 0 0 4px rgba(15,138,107,.18)}
+/* === Student PIN orbit: 5 slots on a dotted ring, spiral into the hub on submit === */
+.orbit{--r:84px;--slot:50px;position:relative;width:236px;height:236px;margin:0 auto}
+.orbit__ring{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+/* dotted on purpose: a solid ring at this size reads as a loading spinner */
+.orbit__path{fill:none;stroke:var(--border-strong);stroke-width:1.5;stroke-dasharray:2 8;stroke-linecap:round;transition:stroke .3s}
+.orbit.bad .orbit__path{stroke:var(--danger)}
+.orbit__hub{position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:var(--ink-4);transition:all .45s cubic-bezier(.34,1.56,.64,1);display:flex;align-items:center;justify-content:center;color:#fff;overflow:hidden}
+.orbit__hub svg{width:34px;height:34px;opacity:0;transform:scale(.4);transition:all .35s .15s}
+.orbit.spin .orbit__hub{background:var(--primary);box-shadow:0 0 0 6px rgba(15,138,107,.2)}
+.orbit.ok .orbit__hub{width:78px;height:78px;margin:-39px 0 0 -39px;background:var(--primary);box-shadow:0 14px 30px -8px rgba(15,138,107,.6)}
+.orbit.ok .orbit__hub svg{opacity:1;transform:none}
+.slot{position:absolute;left:50%;top:50%;width:var(--slot);height:var(--slot);margin:calc(var(--slot) / -2) 0 0 calc(var(--slot) / -2);
+  transform:rotate(var(--a)) translateY(calc(var(--r) * -1)) rotate(calc(var(--a) * -1));
+  border-radius:14px;background:#fff;border:1.5px solid var(--border-strong);box-shadow:0 1px 0 rgba(255,255,255,.9) inset,0 8px 18px -10px rgba(15,46,42,.35);
+  display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;color:var(--ink);
+  transition:border-color .2s,background .2s,color .2s}
+.slot span{display:block;line-height:1}
+.slot .empty{width:5px;height:5px;border-radius:50%;background:var(--ink-4)}
+.slot.cur{border-color:var(--primary);box-shadow:0 8px 18px -10px rgba(15,46,42,.35),0 0 0 4px rgba(15,138,107,.16)}
+.slot.cur .empty{width:2px;height:20px;border-radius:1px;background:var(--primary);animation:caret 1s steps(1) infinite}
+.slot.f{border-color:rgba(15,138,107,.55)}
+.slot.f span{animation:slotPop .28s cubic-bezier(.34,1.56,.64,1)}
+.orbit.bad .slot{border-color:var(--danger);color:var(--danger);background:var(--danger-tint)}
+.orbit.shake{animation:orbitShake .42s}
+@keyframes caret{50%{opacity:0}}
+@keyframes slotPop{from{transform:scale(.4);opacity:0}}
+@keyframes orbitShake{20%{translate:-9px 0}40%{translate:8px 0}60%{translate:-5px 0}80%{translate:3px 0}}
+/* short phones (iPhone SE ~667px): shrink orbit + keypad so the whole PIN screen fits without scrolling */
+@media (max-height:760px){
+  .orbit{--r:60px;--slot:40px;width:170px;height:170px}
+  .slot{font-size:17px;border-radius:11px}
+  .pin-screen .pin-top{margin-bottom:8px!important}
+  .pin-screen .pin-who{padding:9px 14px!important;margin-bottom:8px!important}
+  .pin-screen .pin-forgot{margin-bottom:10px!important}
+  .pin-screen .numpad{gap:8px}
+  .pin-screen .numpad button{min-height:50px;padding:12px 0}
+}
+@media (max-height:700px){ .pin-screen .pin-sub{display:none} }
+.pin-status{text-align:center;font-size:13px;min-height:20px;margin:6px 0 4px;color:var(--ink-3)}
+.pin-status.bad{color:var(--danger);font-weight:600}
+.pin-status.ok{color:var(--primary-deep);font-weight:600}
+.numpad.busy{opacity:.45;pointer-events:none}
+@media (prefers-reduced-motion:reduce){ .slot.cur .empty,.slot.f span,.orbit.shake{animation:none} }
 
 /* === Step indicator === */
 .steps{display:flex;align-items:center;gap:6px}
@@ -717,42 +757,135 @@ function pwBack() {
 }
 
 // ── PIN numpad (use direct DOM update to avoid re-rendering whole screen, fixes name-card bouncing) ──
+const PIN_LEN = 5;
+const ORBIT_R = 84;
+const PIN_HINT = 'แตะตัวเลข หรือพิมพ์ / วางรหัสได้เลย';
+// Anticipation then brake: slots pull back slightly before spiralling into the hub
+const WIND_UP_BRAKE = 'cubic-bezier(.6,-0.35,.2,1)';
+let pinBusy = false;
+let pinAnims = [];
+const reduceMotion = () => window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
 function pinPress(d) {
-  if (STATE.pinBuf.length >= 5) return;
+  if (pinBusy || STATE.pinBuf.length >= PIN_LEN) return;
   STATE.pinBuf += String(d);
+  const i = STATE.pinBuf.length - 1;
   updatePinDotsDOM();
-  if (STATE.pinBuf.length === 5) setTimeout(tryPinLogin, 180);
+  // Show the digit briefly, then mask it so nobody nearby can read the student ID
+  setTimeout(() => {
+    const s = document.querySelectorAll('.orbit .slot')[i];
+    const span = s && s.querySelector('span');
+    if (span && STATE.pinBuf.length > i) span.textContent = '•';
+  }, 550);
+  if (STATE.pinBuf.length === PIN_LEN) setTimeout(tryPinLogin, 200);
 }
 function pinBack() {
-  if (!STATE.pinBuf) return;
+  if (pinBusy || !STATE.pinBuf) return;
   STATE.pinBuf = STATE.pinBuf.slice(0,-1);
   updatePinDotsDOM();
 }
 function pinClear() {
+  if (pinBusy) return;
   STATE.pinBuf = '';
   updatePinDotsDOM();
 }
+function pinSlotHtml(i, len, busy) {
+  const filled = i < len;
+  const cls = 'slot' + (filled ? ' f' : '') + (!busy && i === len ? ' cur' : '');
+  return `<div class="${cls}" style="--a:${i * 360 / PIN_LEN}deg">${filled ? '<span>•</span>' : '<div class="empty"></div>'}</div>`;
+}
 function updatePinDotsDOM() {
-  document.querySelectorAll('.pin-dots > div').forEach((dot, i) => {
-    if (i < STATE.pinBuf.length) dot.classList.add('f');
-    else dot.classList.remove('f');
+  const len = STATE.pinBuf.length;
+  document.querySelectorAll('.orbit .slot').forEach((s, i) => {
+    const filled = i < len;
+    s.classList.toggle('f', filled);
+    s.classList.toggle('cur', !pinBusy && i === len);
+    if (filled && i === len - 1 && !s.querySelector('span')) s.innerHTML = `<span>${esc(STATE.pinBuf[i])}</span>`;
+    else if (!filled && !s.querySelector('.empty')) s.innerHTML = '<div class="empty"></div>';
   });
+}
+function setPinStatus(text, cls) {
+  const el = document.getElementById('pin-status');
+  if (el) { el.textContent = text; el.className = 'pin-status' + (cls ? ' ' + cls : ''); }
+}
+function setPinBusy(v) {
+  pinBusy = v;
+  document.querySelector('.numpad')?.classList.toggle('busy', v);
 }
 function tryPinLogin() {
   const u = STATE.users.find(x => x.id === STATE.pickedUid);
   if (!u) return;
-  if (u.pin && u.pin !== STATE.pinBuf) {
-    showToast('รหัสนักเรียนไม่ถูก','error');
-    STATE.pinBuf = '';
-    render();
-    return;
+  const ok = !u.pin || u.pin === STATE.pinBuf;
+  const orbit = document.querySelector('.orbit');
+  const reduce = reduceMotion();
+  setPinBusy(true);
+  updatePinDotsDOM();
+  setPinStatus('กำลังตรวจสอบ…');
+  if (orbit) {
+    orbit.classList.add('spin');
+    const r = parseFloat(getComputedStyle(orbit).getPropertyValue('--r')) || ORBIT_R;
+    pinAnims = [...orbit.querySelectorAll('.slot')].map((s, i) => {
+      const a = i * 360 / PIN_LEN, b = a + 450;
+      return s.animate([
+        { transform: `rotate(${a}deg) translateY(-${r}px) rotate(${-a}deg) scale(1)`, opacity: 1 },
+        { transform: `rotate(${b}deg) translateY(0px) rotate(${-b}deg) scale(.3)`, opacity: 0 }
+      ], { duration: reduce ? 1 : 800, delay: reduce ? 0 : i * 45, easing: WIND_UP_BRAKE, fill: 'forwards' });
+    });
   }
-  localStorage.setItem('cf_uid', u.id);
-  STATE.session = {role:'user', uid:u.id};
-  STATE.rememberUid = u.id;
-  STATE.pinBuf = '';
-  navigate('#/u/home');
+  // Fixed timers rather than animation promises: a realtime re-render may replace these nodes mid-flight
+  setTimeout(() => ok ? pinSuccess(u) : pinFail(), reduce ? 50 : 1000);
 }
+function pinSuccess(u) {
+  const orbit = document.querySelector('.orbit');
+  if (orbit) { orbit.classList.remove('spin'); orbit.classList.add('ok'); }
+  setPinStatus(`ยินดีต้อนรับ ${u.nick || stripPrefix(u.name)}`, 'ok');
+  setTimeout(() => {
+    pinAnims = [];
+    setPinBusy(false);
+    localStorage.setItem('cf_uid', u.id);
+    STATE.session = {role:'user', uid:u.id};
+    STATE.rememberUid = u.id;
+    STATE.pinBuf = '';
+    navigate('#/u/home');
+  }, reduceMotion() ? 200 : 650);
+}
+function pinFail() {
+  const orbit = document.querySelector('.orbit');
+  const reduce = reduceMotion();
+  if (orbit) orbit.classList.remove('spin');
+  pinAnims.forEach(a => { a.playbackRate = 1.6; a.reverse(); });
+  setTimeout(() => {
+    pinAnims.forEach(a => a.cancel());
+    pinAnims = [];
+    const o = document.querySelector('.orbit');
+    if (o) { o.classList.add('bad'); if (!reduce) o.classList.add('shake'); }
+    setPinStatus('รหัสไม่ถูก ลองอีกครั้ง', 'bad');
+    showToast('รหัสนักเรียนไม่ถูก','error');
+    setTimeout(() => {
+      document.querySelector('.orbit')?.classList.remove('bad', 'shake');
+      STATE.pinBuf = '';
+      setPinBusy(false);
+      updatePinDotsDOM();
+      setPinStatus(PIN_HINT);
+    }, 900);
+  }, reduce ? 50 : 560);
+}
+// Desktop: type or paste the PIN while the student PIN screen is open
+document.addEventListener('keydown', e => {
+  if (STATE.session || STATE.loginStage !== 'pin' || e.target.closest?.('input,textarea')) return;
+  if (/^[0-9]$/.test(e.key)) pinPress(e.key);
+  else if (e.key === 'Backspace') pinBack();
+  else if (e.key === 'Escape') pinClear();
+});
+document.addEventListener('paste', e => {
+  if (STATE.session || STATE.loginStage !== 'pin' || pinBusy || e.target.closest?.('input,textarea')) return;
+  const t = (e.clipboardData?.getData('text') || '').replace(/\D/g, '').slice(0, PIN_LEN);
+  if (!t) return;
+  e.preventDefault();
+  STATE.pinBuf = '';
+  updatePinDotsDOM();
+  [...t].forEach((d, i) => setTimeout(() => pinPress(d), i * 70));
+});
 function quickLogin() {
   const u = STATE.users.find(x => x.id === STATE.rememberUid);
   if (!u) return;
@@ -1095,13 +1228,13 @@ function renderPinScreen() {
   if (!u) return renderWelcome();
   const buf = STATE.pinBuf || '';
   return `<div style="min-height:100vh;display:flex;flex-direction:column;padding:14px 16px calc(20px + env(safe-area-inset-bottom));padding-top:max(14px,env(safe-area-inset-top))">
-    <div style="width:100%;max-width:380px;margin:0 auto;flex:1;display:flex;flex-direction:column">
-      <div style="margin-bottom:16px">
+    <div class="pin-screen" style="width:100%;max-width:380px;margin:0 auto;flex:1;display:flex;flex-direction:column">
+      <div class="pin-top" style="margin-bottom:16px">
         <button class="btn-g" style="width:36px;height:36px;padding:0;border-radius:10px;display:flex;align-items:center;justify-content:center" onclick="setState({loginStage:'choose',pinBuf:''})">${svgIcon('back',18)}</button>
       </div>
 
       <!-- Compact name card (NO animation class — won't bounce on re-render) -->
-      <div style="padding:13px 16px;border-radius:16px;background:var(--surface-2);border:1px solid var(--border);display:flex;align-items:center;gap:12px;margin-bottom:24px">
+      <div class="pin-who" style="padding:13px 16px;border-radius:16px;background:var(--surface-2);border:1px solid var(--border);display:flex;align-items:center;gap:12px;margin-bottom:16px">
         ${avatarHtml(u.name, 42, 'mint')}
         <div style="flex:1;min-width:0">
           <div style="font-size:11px;color:var(--ink-3);font-weight:500">กำลังเข้าระบบในชื่อ</div>
@@ -1109,22 +1242,26 @@ function renderPinScreen() {
         </div>
       </div>
 
-      <div style="text-align:center;margin-bottom:18px">
+      <div style="text-align:center;margin-bottom:8px">
         <h1 class="h2" style="margin-bottom:6px">ใส่รหัสนักเรียน</h1>
-        <p style="font-size:12px;color:var(--ink-3)">5 หลัก · รหัสประจำตัวที่โรงเรียนออกให้</p>
+        <p class="pin-sub" style="font-size:12px;color:var(--ink-3)">5 หลัก · รหัสประจำตัวที่โรงเรียนออกให้</p>
       </div>
 
-      <div class="pin-dots" style="margin-bottom:14px">
-        ${[0,1,2,3,4].map(i=>`<div class="${i<buf.length?'f':''}"></div>`).join('')}
+      <div class="orbit${pinBusy?' spin':''}">
+        <svg class="orbit__ring" viewBox="0 0 236 236" aria-hidden="true"><circle class="orbit__path" cx="118" cy="118" r="${ORBIT_R}" vector-effect="non-scaling-stroke"/></svg>
+        <div class="orbit__hub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+        ${Array.from({length:PIN_LEN}, (_, i) => pinSlotHtml(i, buf.length, pinBusy)).join('')}
       </div>
 
-      <div style="text-align:center;font-size:12px;color:var(--ink-3);margin-bottom:28px">
+      <div id="pin-status" class="pin-status" aria-live="polite">${pinBusy ? 'กำลังตรวจสอบ…' : PIN_HINT}</div>
+
+      <div class="pin-forgot" style="text-align:center;font-size:12px;color:var(--ink-3);margin-bottom:20px">
         ลืมรหัส? <b style="color:var(--primary-deep);font-weight:600">ติดต่อ${esc(ADMIN_NAME)}</b>
       </div>
 
       <div style="flex:1"></div>
 
-      <div class="numpad">
+      <div class="numpad${pinBusy?' busy':''}">
         ${[1,2,3,4,5,6,7,8,9].map(n=>`<button onclick="pinPress(${n})">${n}</button>`).join('')}
         <button class="back" onclick="pinClear()">ล้าง</button>
         <button onclick="pinPress(0)">0</button>
