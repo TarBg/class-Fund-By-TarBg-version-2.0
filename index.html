@@ -36,14 +36,22 @@
 }
 html,body{min-height:100%;font-family:'IBM Plex Sans Thai',sans-serif;color:var(--ink);background:var(--bg);overflow-x:hidden;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 body{
-  background:
-    radial-gradient(1200px 600px at 12% -10%,rgba(15,138,107,.10),transparent 60%),
-    radial-gradient(900px 500px at 95% 8%,rgba(245,182,56,.08),transparent 60%),
-    radial-gradient(900px 700px at 50% 110%,rgba(15,138,107,.06),transparent 60%),
-    linear-gradient(180deg,#FAF8F2 0%,#F6F2E6 60%,#FAF8F2 100%);
-  background-attachment:fixed;
+  background:linear-gradient(180deg,#FAF8F2 0%,#F6F2E6 60%,#FAF8F2 100%);
   min-height:100vh;
 }
+/* App-wide aurora: three soft blobs on one fixed layer behind every page. Only transform animates,
+   so it stays on the compositor and never repaints while scrolling. */
+.aurora{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.aurora i{position:absolute;width:360px;height:360px;border-radius:50%;filter:blur(60px);opacity:.5;animation:wlDrift 18s ease-in-out infinite alternate;will-change:transform}
+.aurora i:nth-child(1){left:-120px;top:-110px;background:radial-gradient(circle,#7FE0BE,transparent 70%)}
+.aurora i:nth-child(2){right:-140px;top:180px;background:radial-gradient(circle,#FFD98A,transparent 70%);animation-duration:22s;animation-delay:-6s}
+.aurora i:nth-child(3){left:10%;bottom:-180px;background:radial-gradient(circle,#A8E6CF,transparent 70%);animation-duration:26s;animation-delay:-12s}
+#app{position:relative;z-index:1}
+/* Page entrance: on each page change the page's blocks rise in one after another (set by staggerIn) */
+.stg-in{animation:fadeUp .5s cubic-bezier(.34,1.4,.64,1) both}
+/* One light sweep across green hero cards when a page opens */
+.hero-mint.shine-once::after{content:'';position:absolute;top:0;bottom:0;left:-45%;width:35%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.22),transparent);transform:skewX(-18deg);animation:wlShine 1.2s .45s ease-in-out both;pointer-events:none}
+@media (prefers-reduced-motion:reduce){ .aurora i,.stg-in,.hero-mint.shine-once::after{animation:none} }
 button{font-family:inherit;color:inherit;cursor:pointer;border:none;background:none}
 input,select,textarea{font-family:inherit;color:inherit}
 img{display:block;max-width:100%}
@@ -60,7 +68,7 @@ img{display:block;max-width:100%}
 .h3{font-size:16px;font-weight:600;letter-spacing:-.1px}
 
 /* === Cards & surfaces === */
-.card{background:#fff;border:1px solid var(--border);border-radius:18px;box-shadow:0 1px 2px rgba(15,46,42,.04),0 10px 28px -16px rgba(15,46,42,.10)}
+.card{background:rgba(255,255,255,.88);border:1px solid var(--border);border-radius:18px;box-shadow:0 1px 2px rgba(15,46,42,.04),0 10px 28px -16px rgba(15,46,42,.10)}
 .card-flat{background:var(--surface-2);border:1px solid var(--border);border-radius:14px}
 .hero-mint{background:linear-gradient(165deg,#0F8A6B 0%,#0A6B53 60%,#063D2F 100%);color:#fff;border-radius:26px;padding:22px;position:relative;overflow:hidden;box-shadow:0 16px 32px -16px rgba(10,107,83,.5)}
 .hero-mint::before{content:'';position:absolute;top:60px;right:-90px;width:240px;height:240px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#FFD56A,#F5B638 70%,rgba(214,154,31,.9));opacity:.55;pointer-events:none}
@@ -164,11 +172,6 @@ input::placeholder,textarea::placeholder{color:rgba(15,46,42,.32)}
 
 /* === Welcome screen: drifting aurora, staggered entrance, live wallet card with a goal ring === */
 .wl{position:relative;min-height:100vh;overflow:hidden;display:flex;justify-content:center;align-items:center;padding:max(20px,env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom))}
-.wl-aurora{position:absolute;inset:0;pointer-events:none;z-index:0}
-.wl-aurora i{position:absolute;width:360px;height:360px;border-radius:50%;filter:blur(60px);opacity:.55;animation:wlDrift 18s ease-in-out infinite alternate}
-.wl-aurora i:nth-child(1){left:-120px;top:-110px;background:radial-gradient(circle,#7FE0BE,transparent 70%)}
-.wl-aurora i:nth-child(2){right:-140px;top:180px;background:radial-gradient(circle,#FFD98A,transparent 70%);animation-duration:22s;animation-delay:-6s}
-.wl-aurora i:nth-child(3){left:10%;bottom:-180px;background:radial-gradient(circle,#A8E6CF,transparent 70%);animation-duration:26s;animation-delay:-12s}
 @keyframes wlDrift{to{transform:translate(60px,40px) scale(1.15)}}
 .wl-col{position:relative;z-index:1;width:100%;max-width:440px;display:flex;flex-direction:column;gap:14px}
 .wl .fade-up:nth-child(2){animation-delay:.07s}.wl .fade-up:nth-child(3){animation-delay:.14s}.wl .fade-up:nth-child(4){animation-delay:.21s}
@@ -206,7 +209,7 @@ input::placeholder,textarea::placeholder{color:rgba(15,46,42,.32)}
 .wl-cta::after{content:"";position:absolute;top:0;bottom:0;left:-40%;width:35%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.28),transparent);transform:skewX(-18deg);animation:wlShine 1.1s 1.3s ease-in-out both}
 @keyframes wlShine{from{left:-40%}to{left:120%}}
 .wl-foot{text-align:center;font-size:11px;color:var(--ink-3)}
-@media (prefers-reduced-motion:reduce){ .wl-aurora i,.wl-live i,.wl-ring .bar,.wl-cta::after{animation:none} }
+@media (prefers-reduced-motion:reduce){ .wl-live i,.wl-ring .bar,.wl-cta::after{animation:none} }
 
 /* === Desktop side nav: click the white area to collapse / expand (remembered) === */
 .sx-shell{--sx-w:240px;display:flex;min-height:100vh;position:relative;z-index:1}
@@ -353,6 +356,7 @@ input::placeholder,textarea::placeholder{color:rgba(15,46,42,.32)}
 </style>
 </head>
 <body>
+<div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
 <div id="app"></div>
 <div id="overlay"></div>
 
@@ -1230,6 +1234,23 @@ function paintCountUps() {
 // ============================================================
 // === RENDER DISPATCHER ======================================
 // ============================================================
+// Page entrance: the visible page's blocks rise in one after another. Runs only when the page
+// changes (not on realtime refreshes), so live updates never make the screen jump.
+function staggerIn() {
+  if (reduceMotion()) return;
+  const root = document.querySelector('#app .m-main, #app .d-content, #app .pin-screen, #usr-list');
+  if (!root) return;
+  let box = root;
+  const kids = el => [...el.children].filter(c => c.tagName !== 'STYLE' && c.tagName !== 'SCRIPT');
+  for (let d = 0; d < 3 && kids(box).length === 1; d++) box = kids(box)[0];   // descend through single wrappers
+  kids(box).slice(0, 12).forEach((el, i) => {
+    el.classList.remove('stg-in'); void el.offsetWidth;
+    el.style.animationDelay = (i * 0.06) + 's';
+    el.classList.add('stg-in');
+  });
+  document.querySelectorAll('#app .hero-mint').forEach(h => h.classList.add('shine-once'));
+}
+
 // While a send/compress animation runs, a realtime update must not rebuild the page under it
 let UI_LOCK = false, RENDER_PENDING = false;
 function unlockUI() {
@@ -1265,6 +1286,8 @@ function render() {
   }
   paintToast();
   paintCountUps();
+  const pageKey = [STATE.route, STATE.session?.role || '', STATE.session ? '' : STATE.loginStage, STATE.payStep].join('|');
+  if (pageKey !== STATE._pageKey) { STATE._pageKey = pageKey; staggerIn(); }
   // Auto-focus AI on admin verify when key exists
   if (STATE.session?.role==='admin' && STATE.route==='#/a/vr' && STATE.aiKey && !STATE.aiRunning) {
     setTimeout(runAiOnPending, 200);
@@ -1301,7 +1324,6 @@ function renderWelcome() {
   const room = (CLASS_NAME.split('·')[0] || '').trim();
   const avs = sortUsersById(STATE.users).slice(0, 5).map((u, i) => { const t = avTone(i); return `<em style="background:${t.bg};color:${t.fg}">${esc(initial(u.name))}</em>`; }).join('');
   return `<div class="wl">
-    <div class="wl-aurora" aria-hidden="true"><i></i><i></i><i></i></div>
     <div class="wl-col">
       <header class="wl-top fade-up">
         <div class="wl-logo" aria-hidden="true">🏦</div>
@@ -2589,7 +2611,7 @@ function renderDesktopShell({nav, activeNav, body, title, eyebrow, action=''}) {
           ${action}
         </div>
       </header>
-      <section class="d-content fade-up">${body}</section>
+      <section class="d-content">${body}</section>
     </main>`);
 }
 
