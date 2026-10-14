@@ -139,32 +139,98 @@ input::placeholder,textarea::placeholder{color:rgba(15,46,42,.32)}
 .bar > .pending{position:absolute;top:0;height:100%;background:repeating-linear-gradient(45deg,rgba(232,154,42,.45) 0 6px,rgba(232,154,42,.15) 6px 12px)}
 
 /* ============== MOBILE LAYOUT ============== */
-.m-shell{min-height:100vh;padding-bottom:90px;position:relative;z-index:1}
+.m-shell{min-height:100vh;padding-bottom:30px;position:relative;z-index:1}
 .m-topbar{position:sticky;top:0;z-index:30;background:rgba(250,248,242,.92);backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;min-height:calc(54px + env(safe-area-inset-top));padding-top:calc(14px + env(safe-area-inset-top))}
 .m-main{padding:16px;max-width:540px;margin:0 auto}
-.m-bottom-nav{position:fixed;left:0;right:0;bottom:0;z-index:40;padding:10px 12px calc(20px + env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(250,248,242,0) 0%,rgba(250,248,242,.96) 40%,#FAF8F2 100%);pointer-events:none}
-.m-bottom-nav > .pill-bar{pointer-events:auto;background:#fff;border:1px solid var(--border);border-radius:28px;padding:8px;display:flex;gap:4px;box-shadow:0 16px 40px -8px rgba(15,46,42,.18),0 2px 6px rgba(15,46,42,.05)}
-.m-bottom-nav button{flex:1;min-height:48px;padding:8px 10px;border-radius:22px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:10px;font-weight:600;color:var(--ink-3);transition:all .18s}
-.m-bottom-nav button.on{background:#1A2E2A;color:#fff;box-shadow:0 6px 16px rgba(15,46,42,.28)}
-.m-bottom-nav button svg{width:20px;height:20px;display:block}
-.m-tab-bar{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:10px 16px;background:rgba(244,241,232,.66);border-bottom:1px solid var(--border)}
-.m-tab-bar::-webkit-scrollbar{display:none}
-.m-tab-bar button{padding:8px 14px;border-radius:22px;background:#fff;border:1px solid var(--border);font-size:12px;font-weight:600;color:var(--ink-3);white-space:nowrap;transition:all .15s;display:flex;align-items:center;gap:6px}
-.m-tab-bar button.on{background:#1A2E2A;color:#fff;border-color:#1A2E2A}
 
 /* ============== DESKTOP LAYOUT ============== */
-.d-shell{min-height:100vh;display:flex;position:relative;z-index:1}
-.d-sidebar{width:240px;flex-shrink:0;border-right:1px solid var(--border);background:#fff;padding:22px 18px;display:flex;flex-direction:column;gap:14px;position:sticky;top:0;height:100vh}
-.d-brand{display:flex;align-items:center;gap:11px;padding:6px 4px 18px;border-bottom:1px solid var(--border);margin-bottom:4px}
-.d-brand-logo{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#0F8A6B,#0A6B53);display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;box-shadow:0 6px 16px rgba(15,138,107,.32)}
-.d-nav{flex:1;display:flex;flex-direction:column;gap:3px;overflow-y:auto}
-.d-nav button{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:11px;font-size:14px;font-weight:500;color:var(--ink-2);text-align:left;transition:all .15s}
-.d-nav button:hover{background:var(--surface-2);color:var(--ink)}
-.d-nav button.on{background:linear-gradient(135deg,#0F8A6B,#0A6B53);color:#fff;font-weight:600;box-shadow:0 6px 14px rgba(15,138,107,.28)}
-.d-nav button.on .d-nav-badge{background:rgba(255,255,255,.22);color:#fff}
-.d-nav-badge{margin-left:auto;background:var(--accent-tint);color:var(--accent-deep);padding:2px 8px;border-radius:8px;font-size:11px;font-weight:700}
-.d-user-card{background:var(--surface-2);border-radius:13px;padding:10px 12px;display:flex;align-items:center;gap:10px;margin-top:auto}
 .d-main{flex:1;display:flex;flex-direction:column;min-width:0}
+
+/* === Side nav: icon rail on phones (tap the white area to slide it open), collapsible sidebar on desktop === */
+.sx-shell{--sx-w:64px;min-height:100vh;position:relative;z-index:1}
+.sx-shell.desk{--sx-w:240px;display:flex}
+.sx-shell.desk.mini{--sx-w:76px}
+.sx-main{padding-left:var(--sx-w);min-width:0}
+.sx-shell.desk .sx-main{padding-left:0;flex:1;display:flex;flex-direction:column}
+.sx-fixed{left:var(--sx-w,0px) !important}
+.sx{position:fixed;left:0;top:0;bottom:0;z-index:50;width:var(--sx-w);background:#fff;border-right:1px solid var(--border);cursor:pointer;transition:width .38s cubic-bezier(.3,1.15,.5,1),box-shadow .3s}
+.sx.open{width:248px;box-shadow:18px 0 40px -18px rgba(15,46,42,.35)}
+.sx-shell.desk .sx{position:sticky;height:100vh;flex-shrink:0}
+.sx-in{height:100%;overflow:hidden;display:flex;flex-direction:column;gap:6px;padding:max(14px,env(safe-area-inset-top)) 10px calc(14px + env(safe-area-inset-bottom))}
+.sx-shell.desk .sx-in{padding:18px 14px}
+.sx-brand{display:flex;align-items:center;gap:11px;padding:2px 0 14px;border-bottom:1px solid var(--border);margin-bottom:4px;white-space:nowrap}
+.sx-logo{width:44px;height:44px;border-radius:13px;background:linear-gradient(135deg,#0F8A6B,#0A6B53);display:flex;align-items:center;justify-content:center;font-size:21px;flex-shrink:0;box-shadow:0 6px 16px rgba(15,138,107,.32)}
+.sx-fade{transition:opacity .22s}
+.sx.mini .sx-fade{opacity:0;pointer-events:none}
+.sx-lbl{font-size:10.5px;font-weight:600;letter-spacing:.6px;color:var(--ink-3);padding:8px 0 2px 4px;white-space:nowrap}
+.sx.mini .sx-lbl{padding-left:0;text-align:center;width:44px}
+.sx-nav{position:relative;display:flex;flex-direction:column;gap:2px;flex:1;min-height:0}
+.sx-glow{position:absolute;left:-10px;right:0;top:0;height:44px;border-radius:0 12px 12px 0;pointer-events:none;background:linear-gradient(90deg,rgba(15,138,107,.16),rgba(15,138,107,.05) 55%,rgba(15,138,107,0));transition:transform .42s cubic-bezier(.3,1.15,.5,1)}
+.sx-shell.desk .sx-glow{left:-14px}
+.sx-glow::before{content:"";position:absolute;left:0;top:9px;bottom:9px;width:3.5px;border-radius:0 4px 4px 0;background:var(--primary);box-shadow:0 0 10px 2px rgba(95,221,181,.85),0 0 22px 6px rgba(95,221,181,.35)}
+.sx-arc{position:absolute;left:-10px;top:0;width:18px;height:100%;pointer-events:none;z-index:2}
+.sx-shell.desk .sx-arc{left:-14px}
+.sx-item{position:relative;display:flex;align-items:center;gap:13px;height:44px;padding:0 12px;border-radius:12px;color:var(--ink-3);font-size:14px;font-weight:500;white-space:nowrap;text-align:left;transition:color .2s,background .15s}
+.sx-item:hover{background:rgba(26,46,42,.04);color:var(--ink-2)}
+.sx-item.on{color:var(--primary-ink);font-weight:700}
+.sx-item.on > span:first-child{color:var(--primary)}
+.sx-badge{margin-left:auto;min-width:22px;height:20px;padding:0 7px;border-radius:999px;background:var(--accent);color:#3B2604;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;transition:all .3s}
+.sx.mini .sx-badge{position:absolute;left:29px;top:9px;min-width:9px;width:9px;height:9px;padding:0;font-size:0;box-shadow:0 0 0 2px #fff}
+.sx.mini .sx-item[data-tip]:hover::after{content:attr(data-tip);position:absolute;left:54px;top:50%;transform:translateY(-50%);background:var(--ink);color:#fff;font-size:12px;font-weight:600;padding:5px 9px;border-radius:8px;white-space:nowrap;pointer-events:none;z-index:9}
+.sx-cta{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:14px;background:var(--accent-tint);border:1px solid rgba(245,182,56,.4);white-space:nowrap;text-align:left;position:relative}
+.sx-cta-ic{width:24px;height:24px;border-radius:8px;background:var(--accent);color:#3B2604;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sx-cta b{display:block;font-size:13px;color:var(--accent-deep)}
+.sx-cta small{display:block;font-size:11px;color:var(--accent-deep);opacity:.8}
+.sx.mini .sx-cta{padding:10px;justify-content:center}
+.sx.mini .sx-cta .sx-fade{position:absolute;left:46px}
+.sx.mini .sx-cta::after{content:"";position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:var(--danger);box-shadow:0 0 0 2px var(--accent-tint)}
+.sx-me{display:flex;align-items:center;gap:10px;padding:8px 2px 0;border-top:1px solid var(--border);margin-top:6px;white-space:nowrap}
+.sx-me b{display:block;font-size:13px}
+.sx-me small{display:block;font-size:11px;color:var(--ink-3)}
+.sx-out{margin-left:auto;width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--danger)}
+.sx-scrim{position:fixed;inset:0;z-index:45;background:rgba(26,46,42,.28);opacity:0;pointer-events:none;transition:opacity .3s}
+.sx-scrim.on{opacity:1;pointer-events:auto}
+
+/* === Send button: shrinks to a puck and scans until the database actually answers === */
+.glance{position:relative;height:64px;display:flex;align-items:center;justify-content:center}
+.glance__aura{position:absolute;left:50%;top:50%;width:150px;height:150px;margin:-75px 0 0 -75px;border-radius:50%;background:radial-gradient(circle,rgba(95,221,181,.55),rgba(95,221,181,0) 65%);opacity:0;transform:scale(.6);transition:opacity .4s,transform .6s;pointer-events:none}
+.glance[data-state="scan"] .glance__aura{opacity:1;transform:scale(1);animation:glanceAura 1.1s ease-in-out infinite}
+.glance[data-verdict="fail"] .glance__aura{background:radial-gradient(circle,rgba(217,75,83,.35),rgba(217,75,83,0) 65%)}
+@keyframes glanceAura{50%{transform:scale(1.12);opacity:.7}}
+.glance__btn{--w:100%;position:relative;width:var(--w);height:54px;border-radius:999px;overflow:hidden;background:linear-gradient(135deg,#0F8A6B,#0A6B53);color:#fff;font-weight:700;font-size:15px;box-shadow:0 10px 24px -8px rgba(15,138,107,.55);transition:width .5s cubic-bezier(.5,0,.2,1),height .5s cubic-bezier(.5,0,.2,1),background .35s,box-shadow .35s}
+.glance__btn:disabled{opacity:.4;pointer-events:none}
+.glance[data-state="scan"] .glance__btn{--w:64px;height:64px;pointer-events:none}
+.glance[data-state="open"] .glance__btn{--w:min(100%,300px);transition:width .6s cubic-bezier(.3,1.35,.5,1),height .5s,background .35s}
+.glance[data-verdict="fail"] .glance__btn{background:linear-gradient(135deg,#D94B53,#B7373F);box-shadow:0 10px 24px -8px rgba(217,75,83,.5)}
+.glance__word,.glance__icon,.glance__res{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .25s,transform .35s;white-space:nowrap}
+.glance__icon{opacity:0;transform:scale(.6)}
+.glance__res{opacity:0;transform:translateY(8px);font-size:14px}
+.glance[data-state="scan"] .glance__word{opacity:0;transform:scale(.8)}
+.glance[data-state="scan"] .glance__icon{opacity:1;transform:none}
+.glance[data-state="open"] .glance__word{opacity:0}
+.glance[data-state="open"] .glance__res{opacity:1;transform:none}
+.glance__beam{position:absolute;left:-10%;right:-10%;top:50%;height:3px;margin-top:-1.5px;border-radius:3px;background:linear-gradient(90deg,transparent,#DFFFF3 30%,#fff 50%,#DFFFF3 70%,transparent);box-shadow:0 0 12px 3px rgba(95,221,181,.9);opacity:0}
+.glance[data-state="scan"] .glance__beam{animation:glanceBeam 1.1s cubic-bezier(.45,0,.55,1) infinite}
+@keyframes glanceBeam{0%{transform:translateY(-34px);opacity:0}12%{opacity:1}71%{transform:translateY(34px);opacity:1}78%,100%{transform:translateY(34px);opacity:0}}
+
+/* === Slip ring: wave while the slip is shrunk on the phone, check when ready === */
+.tide{display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 0}
+.tide svg{width:96px;height:96px;overflow:visible;display:block}
+.tide__fill{fill:var(--primary);transition:fill .32s}
+.tide[data-state="fail"] .tide__fill{fill:var(--danger)}
+.tide__track{fill:none;stroke:rgba(255,255,255,.22);stroke-width:3.4}
+.tide__arc{fill:none;stroke:#fff;stroke-width:3.4;stroke-linecap:round;transition:stroke-dashoffset .4s ease,opacity .3s}
+.tide[data-state="up"] .tide__spin{animation:tideSpin 1s linear infinite}
+@keyframes tideSpin{to{transform:rotate(360deg)}}
+.tide__glyph{fill:none;stroke:#fff;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}
+.tide__lbl{font-size:14px;font-weight:700;color:var(--ink-2)}
+.tide[data-state="done"] .tide__lbl{color:var(--primary-deep)}
+.tide[data-state="fail"] .tide__lbl{color:var(--danger)}
+.tide__sub{font-size:12px;color:var(--ink-3);min-height:18px;text-align:center}
+@media (prefers-reduced-motion:reduce){
+  .sx,.sx-glow,.sx-scrim,.sx-fade,.glance__btn{transition:none}
+  .glance[data-state="scan"] .glance__beam,.glance[data-state="scan"] .glance__aura,.tide[data-state="up"] .tide__spin{animation:none}
+}
 .d-topbar{padding:18px 32px;border-bottom:1px solid var(--border);background:rgba(250,248,242,.86);backdrop-filter:blur(14px);display:flex;align-items:center;justify-content:space-between;gap:16px;position:sticky;top:0;z-index:20}
 .d-topbar h1{font-size:22px;font-weight:700;letter-spacing:-.3px}
 .d-content{flex:1;padding:28px 32px 60px;max-width:1280px;width:100%;margin:0 auto}
@@ -320,7 +386,7 @@ let STATE = {
   loading: true,
   toast: null,
   // pay wizard
-  payStep: 1, paySelected: [], paySlip: null,
+  payStep: 1, paySelected: [], paySlip: null, paySlipInfo: '',
   // ui state
   lbMode: 'fast', editMbId: null, slipZoom: null,
   loginStage: 'welcome',   // welcome | choose | pin | admin
@@ -677,11 +743,112 @@ function uploadQR(input) {
   };
   r.readAsDataURL(f);
 }
-function uploadSlip(input) {
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const fmtBytes = b => b >= 1048576 ? (b / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB';
+function readAsDataURL(f) {
+  return new Promise((res, rej) => { const r = new FileReader(); r.onload = ev => res(ev.target.result); r.onerror = rej; r.readAsDataURL(f); });
+}
+// Shrink a phone photo to 1280px on its long side as JPEG before it is stored (a 3–5 MB photo becomes ~150–300 KB)
+function compressImage(f) {
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(f);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const k = Math.min(1, 1280 / Math.max(img.naturalWidth, img.naturalHeight));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);   // PNG transparency → white, not black
+      ctx.drawImage(img, 0, 0, c.width, c.height);
+      const dataUrl = c.toDataURL('image/jpeg', 0.8);
+      res({ dataUrl, size: Math.round((dataUrl.length - dataUrl.indexOf(',') - 1) * 0.75) });
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('decode')); };
+    img.src = url;
+  });
+}
+
+// ── Slip ring: wave while compressing, morphs to a check (or red) when done ──
+// Every posture is the same 9 points, so each morph is one lerp
+const TIDE_ARROW = [...Array(9)].map((_, k) => k <= 4 ? [-14 + 3.5*k, -3 - 3.5*k] : [3.5*(k-4), -17 + 3.5*(k-4)]);
+const TIDE_CHECK = [...Array(9)].map((_, k) => k <= 4 ? [-18 + 3*k, 1 + 3*k] : [-6 + 6.25*(k-4), 13 - 6.25*(k-4)]);
+const tideWave = ph => [...Array(9)].map((_, k) => [-24 + 6*k, Math.sin(ph + k*.85) * 6]);
+let tideRaf = 0;
+function tideHtml() {
+  return `<div class="tide" id="tide" data-state="up">
+    <svg viewBox="-56 -56 112 112" aria-hidden="true">
+      <circle class="tide__fill" r="54"/>
+      <circle class="tide__track" r="46"/>
+      <g class="tide__spin"><circle class="tide__arc" id="tide-arc" r="46" pathLength="100" stroke-dasharray="100" stroke-dashoffset="72" transform="rotate(-90)"/></g>
+      <polyline class="tide__glyph" id="tide-glyph"/>
+    </svg>
+    <div class="tide__lbl" id="tide-lbl">กำลังย่อรูป</div>
+    <div class="tide__sub" id="tide-sub" aria-live="polite">ทำในเครื่อง ไม่ใช้เน็ต</div>
+  </div>`;
+}
+function tideRun() {
+  const cur = TIDE_ARROW.map(p => p.slice());
+  let last = 0, phase = 0;
+  cancelAnimationFrame(tideRaf);
+  (function frame(t) {
+    const el = document.getElementById('tide'), g = document.getElementById('tide-glyph');
+    if (!el || !g) return;
+    const dt = Math.min(.05, (t - (last || t)) / 1000); last = t;
+    const st = el.dataset.state;
+    phase += dt * 7;
+    const target = st === 'done' ? TIDE_CHECK : st === 'fail' ? TIDE_ARROW : tideWave(phase);
+    const k = reduceMotion() ? 1 : 1 - Math.exp(-dt * 16);
+    let moving = st === 'up';
+    cur.forEach((p, i) => { const dx = target[i][0]-p[0], dy = target[i][1]-p[1]; p[0] += dx*k; p[1] += dy*k; if (Math.abs(dx)+Math.abs(dy) > .05) moving = true; });
+    g.setAttribute('points', cur.map(p => p[0].toFixed(2) + ',' + p[1].toFixed(2)).join(' '));
+    if (moving) tideRaf = requestAnimationFrame(frame);
+  })(performance.now());
+}
+function tideSet(state, lbl, sub) {
+  const el = document.getElementById('tide');
+  if (!el) return;
+  el.dataset.state = state;
+  document.getElementById('tide-lbl').textContent = lbl;
+  document.getElementById('tide-sub').textContent = sub;
+  if (state === 'done') document.getElementById('tide-arc')?.setAttribute('stroke-dashoffset', '0');
+  if (state === 'fail') document.getElementById('tide-arc')?.setAttribute('stroke-dashoffset', '100');
+  tideRun();
+}
+async function uploadSlip(input) {
   const f = input.files[0]; if (!f) return;
-  const r = new FileReader();
-  r.onload = ev => { STATE.paySlip = ev.target.result; render(); };
-  r.readAsDataURL(f);
+  input.value = '';
+  const zone = document.getElementById('slip-zone');
+  if (zone) {
+    zone.innerHTML = tideHtml(); tideRun();
+    zone.scrollIntoView({ block: 'center', behavior: reduceMotion() ? 'auto' : 'smooth' });   // keep the ring clear of the fixed send bar
+  }
+  UI_LOCK = true;
+  const t0 = performance.now();
+  let dataUrl = null, info = '';
+  if (f.type.startsWith('image/')) {
+    try {
+      const out = await compressImage(f);
+      if (out.size < f.size) { dataUrl = out.dataUrl; info = `${fmtBytes(f.size)} → ${fmtBytes(out.size)}`; }
+      else dataUrl = await readAsDataURL(f);   // already small: keep the original
+    } catch {
+      try { dataUrl = await readAsDataURL(f); } catch {}   // e.g. a format this browser can't draw: send as-is
+    }
+  }
+  const left = 700 - (performance.now() - t0);
+  if (left > 0) await sleep(left);
+  if (!dataUrl) {
+    tideSet('fail', 'ใช้ไฟล์นี้ไม่ได้', 'เลือกรูปสลิป (JPG หรือ PNG)');
+    showToast('ไฟล์นี้ไม่ใช่รูปภาพ','error');
+    await sleep(1400);
+    unlockUI(); render();
+    return;
+  }
+  tideSet('done', 'พร้อมส่ง', info ? `ย่อแล้ว ${info}` : 'แนบสลิปแล้ว');
+  await sleep(650);
+  STATE.paySlip = dataUrl;
+  STATE.paySlipInfo = info;
+  unlockUI(); render();
 }
 function togglePaySelect(eid) {
   const has = STATE.paySelected.includes(eid);
@@ -695,28 +862,53 @@ function selectAllUnpaid() {
   STATE.paySelected = unpaid.map(e=>e.id);
   render();
 }
+// Never cut a scan sweep in half: land the verdict at the end of the beam's current pass
+function endOfSweep(g) {
+  const beam = g?.querySelector('.glance__beam');
+  if (!beam || reduceMotion()) return Promise.resolve();
+  return new Promise(r => { beam.addEventListener('animationiteration', r, { once: true }); setTimeout(r, 1200); });
+}
 async function submitPay() {
   const uid = STATE.session?.uid;
-  if (!uid || !STATE.paySelected.length || !STATE.paySlip) return;
-  const slip = STATE.paySlip;
-  const ids = STATE.paySelected;
-  // Insert one payment row per selected expense
-  const rows = ids.map((eid, i) => ({
-    id: 'p'+Date.now()+'_'+i,
-    uid,
-    eid,
-    status: 'pending',
-    paidAt: Date.now(),
-    paid_at: Date.now(),
-    slip,
+  if (UI_LOCK || !uid || !STATE.paySelected.length || !STATE.paySlip) return;
+  UI_LOCK = true;
+  const g = document.getElementById('glance');
+  if (g) { g.dataset.verdict = ''; g.dataset.state = 'scan'; }
+  const now = Date.now();
+  const rows = STATE.paySelected.map((eid, i) => ({
+    id: 'p'+now+'_'+i, uid, eid, status: 'pending', paid_at: now, slip: STATE.paySlip,
   }));
-  STATE.payments = [...STATE.payments, ...rows];
+  const t0 = performance.now();
+  let ok = true;
+  // Only say "sent" once the database has actually stored the rows
+  try {
+    const { error } = await db.from('payments').insert(rows);
+    if (error) throw error;
+  } catch (err) {
+    console.error('submitPay failed', err);
+    ok = false;
+  }
+  const left = 1000 - (performance.now() - t0);   // at least one full sweep, even on fast wifi
+  if (left > 0) await sleep(left);
+  await endOfSweep(g);
+  const res = document.getElementById('glance-res');
+  if (g && res) {
+    res.innerHTML = ok
+      ? `${svgIcon('check',18)} ส่งแล้ว · รอ Admin ตรวจ`
+      : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg> ส่งไม่สำเร็จ · แตะลองใหม่`;
+    g.dataset.verdict = ok ? 'pass' : 'fail';
+    g.dataset.state = 'open';
+  }
+  if (!ok) {
+    UI_LOCK = false;   // keep the red button on screen; tapping it retries with the same slip
+    return;
+  }
+  STATE.payments = [...STATE.payments.filter(p => !rows.some(r => r.id === p.id)), ...rows.map(r => ({...r, paidAt: r.paid_at}))];
+  await sleep(reduceMotion() ? 0 : 750);
   STATE.payStep = 3;
+  RENDER_PENDING = false;
+  UI_LOCK = false;
   render();
-  await db.from('payments').insert(rows.map(r => ({
-    id: r.id, uid: r.uid, eid: r.eid, status: r.status,
-    paid_at: r.paid_at, slip: r.slip,
-  })));
 }
 async function updateBal() {
   const v = +document.getElementById('bal-inp')?.value;
@@ -987,8 +1179,16 @@ function paintCountUps() {
 // ============================================================
 // === RENDER DISPATCHER ======================================
 // ============================================================
+// While a send/compress animation runs, a realtime update must not rebuild the page under it
+let UI_LOCK = false, RENDER_PENDING = false;
+function unlockUI() {
+  UI_LOCK = false;
+  if (RENDER_PENDING) { RENDER_PENDING = false; render(); }
+}
 function render() {
+  if (UI_LOCK) { RENDER_PENDING = true; return; }
   const app = document.getElementById('app');
+  STATE._shell = null;
   if (STATE.loading) {
     app.innerHTML = renderLoading();
     paintToast();
@@ -1003,7 +1203,13 @@ function render() {
   } else {
     html = isMobile ? renderMobileUser() : renderDesktopUser();
   }
-  app.innerHTML = html;
+  const sh = STATE._shell;
+  const cur = document.getElementById('sx-shell');
+  if (sh && cur && cur.dataset.key === sh.key) sxUpdate(sh);
+  else {
+    app.innerHTML = html;
+    if (sh) sxPlaceGlow(sh.ai);
+  }
   paintToast();
   paintCountUps();
   // Auto-focus AI on admin verify when key exists
@@ -1301,26 +1507,162 @@ function renderMobileUser() {
   else if (r === '#/u/chart') { body = renderMobileChart(); tab = 'chart'; }
   else if (r === '#/u/lb') { body = renderMobileLeaderboard(); tab = 'lb'; }
   else { body = renderMobileHome(); tab = 'home'; }
-  // Pay wizard has its own back nav + sticky CTA; skip the floating bottom nav to avoid overlap
-  const showBottomNav = tab !== 'pay';
-  return `<div class="m-shell"${showBottomNav?'':' style="padding-bottom:30px"'}>${body}${showBottomNav?renderBottomNav(tab):''}</div>`;
+  return renderSideShell('user', tab, `<div class="m-shell">${body}</div>`);
 }
 
-function renderBottomNav(active) {
-  const items = [
-    {k:'home', i:'home', l:'หน้าหลัก', h:'#/u/home'},
-    {k:'pay',  i:'send', l:'จ่ายเงิน', h:'#/u/pay'},
-    {k:'chart',i:'chart',l:'สถิติ',    h:'#/u/chart'},
-    {k:'lb',   i:'trophy',l:'อันดับ',  h:'#/u/lb'},
+// ── Side nav (rail on phones, collapsible sidebar on desktop) ──
+// The shell is built once per role; later renders swap only #sx-main so the glow can slide between items.
+const SX_LOGOUT = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><path d="M10 17l-5-5 5-5M5 12h11"/></svg>';
+let sxMini = localStorage.getItem('cf_nav_mini') === '1';   // desktop collapsed state, remembered
+let sxArcRaf = 0;
+function sxItems(role) {
+  if (role === 'admin') return [
+    {k:'ov', l:'ภาพรวม',  i:'home'},
+    {k:'vr', l:'ตรวจสลิป', i:'check', badge: pendingPays().length},
+    {k:'ex', l:'รายการ',   i:'receipt'},
+    {k:'mb', l:'สมาชิก',   i:'users'},
+    {k:'qr', l:'QR Code',  i:'qr'},
+    {k:'bl', l:'ยอดเงิน',  i:'cash'},
   ];
-  return `<div class="m-bottom-nav">
-    <div class="pill-bar">
-      ${items.map(it => `<button class="${active===it.k?'on':''}" onclick="${it.k==='pay'?'startPayWizard()':`navigate('${it.h}')`}">
-        ${svgIcon(it.i, 22)}
-        <span>${it.l}</span>
-      </button>`).join('')}
-    </div>
+  return [
+    {k:'home',  l:'หน้าหลัก', i:'home'},
+    {k:'pay',   l:'จ่ายเงิน', i:'send', badge: sxUnpaid().length},
+    {k:'chart', l:'สถิติ',    i:'chart'},
+    {k:'lb',    l:'อันดับ',   i:'trophy'},
+  ];
+}
+const SX_ACT = {
+  home: () => navigate('#/u/home'), pay: () => startPayWizard(), chart: () => navigate('#/u/chart'), lb: () => navigate('#/u/lb'),
+  ov: () => navigate('#/a/ov'), vr: () => navigate('#/a/vr'), ex: () => navigate('#/a/ex'),
+  mb: () => navigate('#/a/mb'), qr: () => navigate('#/a/qr'), bl: () => navigate('#/a/bl'),
+  logout: () => logout(),
+};
+function sxUnpaid() {
+  const uid = STATE.session?.uid;
+  return STATE.expenses.filter(e => !STATE.payments.find(p => p.uid===uid && p.eid===e.id));
+}
+function sxCtaHtml(role) {
+  if (role !== 'user') return '';
+  const un = sxUnpaid();
+  if (!un.length) return '';
+  const sum = un.reduce((t,e)=>t+e.amount,0);
+  return `<button class="sx-cta" onclick="sxGo(event,'pay')"><span class="sx-cta-ic">${svgIcon('send',14)}</span><span class="sx-fade"><b>ค้างจ่าย ${thb(sum)}</b><small>${un.length} รายการ · จ่ายเลย</small></span></button>`;
+}
+function sxBadgeHtml(n) { return n ? `<span class="sx-badge" aria-label="${n} รายการ">${n}</span>` : ''; }
+function renderSideShell(role, active, main) {
+  const desk = !isMobile;
+  const key = role + (desk ? '|d' : '|m');
+  const items = sxItems(role);
+  const ai = Math.max(0, items.findIndex(it => it.k === active));
+  STATE._shell = { key, role, ai, main };
+  const u = role === 'user' ? STATE.users.find(x => x.id === STATE.session?.uid) : null;
+  const mini = desk ? sxMini : true;
+  return `<div class="sx-shell${desk?' desk':''}${desk&&sxMini?' mini':''}" id="sx-shell" data-key="${key}">
+    ${desk ? '' : '<div class="sx-scrim" id="sx-scrim" onclick="sxOpen(false)"></div>'}
+    <aside class="sx${mini?' mini':''}" id="sx" onclick="sxRailClick(event)" aria-label="เมนู">
+      <div class="sx-in">
+        <div class="sx-brand"><div class="sx-logo" aria-hidden="true">🏦</div><div class="sx-fade"><div class="num" style="font-size:12.5px;font-weight:800;letter-spacing:1.6px;color:var(--primary-deep)">CLASS FUND</div><div style="font-size:11px;color:var(--ink-3);margin-top:1px">${esc(CLASS_NAME)}</div></div></div>
+        <div class="sx-lbl">เมนู</div>
+        <nav class="sx-nav" id="sx-nav">
+          <span class="sx-glow" id="sx-glow" aria-hidden="true"></span>
+          <canvas class="sx-arc" id="sx-arc" aria-hidden="true"></canvas>
+          ${items.map((it,i) => `<button class="sx-item${i===ai?' on':''}" data-k="${it.k}" data-tip="${it.l}" aria-current="${i===ai?'page':'false'}" onclick="sxGo(event,'${it.k}')">${svgIcon(it.i,20)}<span class="sx-fade">${it.l}</span>${sxBadgeHtml(it.badge)}</button>`).join('')}
+        </nav>
+        <div id="sx-cta">${sxCtaHtml(role)}</div>
+        <div class="sx-me">
+          ${role === 'admin'
+            ? `<div style="width:40px;height:40px;border-radius:12px;background:var(--accent-tint);border:1px solid rgba(245,182,56,.32);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0">👑</div><span class="sx-fade"><b>${esc(ADMIN_NAME)} · เหรัญญิก</b><small>Admin</small></span>`
+            : u ? `${avatarHtml(u.name,40,'mint')}<span class="sx-fade" style="min-width:0"><b style="overflow:hidden;text-overflow:ellipsis">${esc(u.nick || stripPrefix(u.name))}</b><small>นักเรียน</small></span>` : ''}
+          <button class="sx-out sx-fade" onclick="sxGo(event,'logout')" title="ออกจากระบบ" aria-label="ออกจากระบบ">${SX_LOGOUT}</button>
+        </div>
+      </div>
+    </aside>
+    <div class="sx-main" id="sx-main">${main}</div>
   </div>`;
+}
+// Tapping the white part of the rail (not a button) slides it open / collapses it
+function sxRailClick(e) {
+  if (e.target.closest('button')) return;
+  if (isMobile) sxOpen(!document.getElementById('sx')?.classList.contains('open'));
+  else {
+    sxMini = !sxMini;
+    localStorage.setItem('cf_nav_mini', sxMini ? '1' : '0');
+    document.getElementById('sx-shell')?.classList.toggle('mini', sxMini);
+    document.getElementById('sx')?.classList.toggle('mini', sxMini);
+  }
+}
+function sxOpen(open) {
+  const sx = document.getElementById('sx');
+  if (!sx || !isMobile) return;
+  sx.classList.toggle('open', open);
+  sx.classList.toggle('mini', !open);
+  document.getElementById('sx-scrim')?.classList.toggle('on', open);
+}
+function sxGo(e, k) {
+  e.stopPropagation();
+  sxOpen(false);
+  SX_ACT[k]?.();
+}
+// Partial update after a render: swap the page, then move the active marker and refresh badges
+function sxUpdate(sh) {
+  document.getElementById('sx-main').innerHTML = sh.main;
+  const items = sxItems(sh.role);
+  const btns = [...document.querySelectorAll('#sx-nav .sx-item')];
+  const prev = btns.findIndex(b => b.classList.contains('on'));
+  btns.forEach((b, i) => {
+    b.classList.toggle('on', i === sh.ai);
+    b.setAttribute('aria-current', i === sh.ai ? 'page' : 'false');
+    b.querySelector('.sx-badge')?.remove();
+    if (items[i]?.badge) b.insertAdjacentHTML('beforeend', sxBadgeHtml(items[i].badge));
+  });
+  const cta = document.getElementById('sx-cta');
+  if (cta) cta.innerHTML = sxCtaHtml(sh.role);
+  sxPlaceGlow(sh.ai, prev >= 0 && prev !== sh.ai ? prev : -1);
+}
+function sxPlaceGlow(ai, fromIdx = -1) {
+  const glow = document.getElementById('sx-glow');
+  const btns = document.querySelectorAll('#sx-nav .sx-item');
+  if (!glow || !btns[ai]) return;
+  if (fromIdx < 0) glow.style.transition = 'none';
+  glow.style.transform = `translateY(${btns[ai].offsetTop}px)`;
+  if (fromIdx < 0) { glow.offsetWidth; glow.style.transition = ''; return; }
+  if (!reduceMotion()) sxArc(btns[fromIdx].offsetTop + 22, btns[ai].offsetTop + 22);
+}
+// Electric streak along the rail edge: head moves LINEAR, tail trails by LAG, then a short ember fades on the target
+function sxArc(y0, y1) {
+  const cvs = document.getElementById('sx-arc');
+  if (!cvs) return;
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const w = cvs.clientWidth, h = cvs.clientHeight;
+  cvs.width = w * dpr; cvs.height = h * dpr;
+  const ctx = cvs.getContext('2d');
+  const T_MOVE = 0.42, LAG = 0.16, T_FADE = 0.32, x = 2.5;   // canvas starts at the rail edge, over the glow bar
+  const dir = Math.sign(y1 - y0), D = Math.abs(y1 - y0), v = D / T_MOVE, t0 = performance.now();
+  cancelAnimationFrame(sxArcRaf);
+  (function frame(now) {
+    if (!cvs.isConnected) return;
+    const t = (now - t0) / 1000;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+    const head = y0 + dir * Math.min(D, v * t);
+    const tail = y0 + dir * Math.min(D, v * Math.max(0, t - LAG));
+    let a = 1, from = Math.min(head, tail), to = Math.max(head, tail);
+    if (t > T_MOVE + LAG) {
+      const k = Math.min(1, (t - T_MOVE - LAG) / T_FADE);
+      a = 1 - k; from = y1 - 13; to = y1 + 13;
+    }
+    if (a <= 0) return;
+    const n = Math.max(3, Math.round((to - from) / 5)), pts = [];
+    for (let i = 0; i <= n; i++) {
+      const u = i / n;
+      pts.push([x + (Math.random() - .5) * 3 * Math.sin(Math.PI * u), from + (to - from) * u]);
+    }
+    const stroke = (lw, col) => { ctx.beginPath(); pts.forEach(([px,py],i)=> i ? ctx.lineTo(px,py) : ctx.moveTo(px,py)); ctx.lineWidth = lw; ctx.strokeStyle = col; ctx.lineCap = 'round'; ctx.stroke(); };
+    stroke(8, `rgba(95,221,181,${.25*a})`);
+    stroke(3.2, `rgba(52,199,155,${.85*a})`);
+    stroke(1.3, `rgba(232,255,246,${a})`);
+    sxArcRaf = requestAnimationFrame(frame);
+  })(t0);
 }
 
 function renderMobileTopUser(opts={}) {
@@ -1478,7 +1820,7 @@ function renderPayStep1() {
         }).join('')}
       </div>
     </div>
-    <div style="position:fixed;left:0;right:0;bottom:0;padding:14px 16px calc(20px + env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(250,248,242,0),#FAF8F2 30%);z-index:30">
+    <div class="sx-fixed" style="position:fixed;left:0;right:0;bottom:0;padding:14px 16px calc(20px + env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(250,248,242,0),#FAF8F2 30%);z-index:30">
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;padding:0 4px">
         <span style="font-size:12px;color:var(--ink-3)">เลือก ${sel.length} รายการ</span>
         <span class="num" style="font-size:18px;font-weight:800;color:var(--primary-deep)">${thb(total)}</span>
@@ -1534,28 +1876,35 @@ function renderPayStep2() {
           <h3 class="h3">แนบสลิปโอนเงิน</h3>
           <span class="pill pill-rose" style="font-size:10px;padding:2px 8px">บังคับ</span>
         </div>
-        ${slip ? `<div style="text-align:center">
+        <div id="slip-zone">${slip ? `<div style="text-align:center">
           <div style="display:inline-block;position:relative">
             <img src="${slip}" style="max-width:100%;max-height:240px;border-radius:12px;border:2px solid var(--primary);box-shadow:0 8px 24px rgba(15,138,107,.18);cursor:zoom-in" onclick="openSlipZoom('${slip}')"/>
             <div style="position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(15,138,107,.4)">${svgIcon('check',16)}</div>
           </div>
-          <div style="margin-top:10px"><button class="btn btn-g" style="font-size:12px;padding:8px 14px" onclick="setState({paySlip:null})">เปลี่ยนสลิป</button></div>
+          ${STATE.paySlipInfo ? `<div style="font-size:11px;color:var(--ink-3);margin-top:8px">ย่อรูปแล้ว · <span class="num">${esc(STATE.paySlipInfo)}</span></div>` : ''}
+          <div style="margin-top:10px"><button class="btn btn-g" style="font-size:12px;padding:8px 14px" onclick="setState({paySlip:null,paySlipInfo:''})">เปลี่ยนสลิป</button></div>
         </div>` : `<label for="slip-inp" style="display:block;border:2px dashed rgba(15,138,107,.32);border-radius:14px;padding:24px;text-align:center;cursor:pointer;background:rgba(15,138,107,.04)">
           <div style="font-size:34px;margin-bottom:8px">📷</div>
           <div style="font-weight:600;font-size:13px;color:var(--primary-deep)">แตะเพื่อเลือก / ถ่ายสลิป</div>
           <div style="font-size:11px;color:var(--ink-3);margin-top:4px">JPG, PNG · บังคับแนบก่อนส่ง</div>
         </label>
-        <input id="slip-inp" type="file" accept="image/*" capture="environment" onchange="uploadSlip(this)" style="display:none"/>`}
+        <input id="slip-inp" type="file" accept="image/*" capture="environment" onchange="uploadSlip(this)" style="display:none"/>`}</div>
         <div style="margin-top:12px;padding:10px 12px;background:var(--surface-2);border-radius:10px;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-2)">
           <span style="font-size:14px">🔒</span>
           <span>พร้อมส่งให้ Admin · รอ Admin ตรวจ</span>
         </div>
       </div>
     </div>
-    <div style="position:fixed;left:0;right:0;bottom:0;padding:14px 16px calc(20px + env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(250,248,242,0),#FAF8F2 30%);z-index:30">
-      <button class="btn btn-p" style="width:100%;padding:15px;${slip?'':'opacity:.4;pointer-events:none'}" onclick="pwNext()">
-        ${svgIcon('send',16)} ส่งให้ Admin ตรวจ
-      </button>
+    <div class="sx-fixed" style="position:fixed;left:0;right:0;bottom:0;padding:14px 16px calc(20px + env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(250,248,242,0),#FAF8F2 30%);z-index:30">
+      <div class="glance" id="glance" data-state="idle">
+        <span class="glance__aura" aria-hidden="true"></span>
+        <button class="glance__btn" ${slip?'':'disabled'} onclick="pwNext()">
+          <span class="glance__word">${svgIcon('send',16)} ส่งให้ Admin ตรวจ</span>
+          <span class="glance__icon" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V5a1 1 0 011-1h3M16 4h3a1 1 0 011 1v3M20 16v3a1 1 0 01-1 1h-3M8 20H5a1 1 0 01-1-1v-3"/><path d="M9 9h6M9 12h6M9 15h3"/></svg></span>
+          <span class="glance__res" id="glance-res"></span>
+          <i class="glance__beam" aria-hidden="true"></i>
+        </button>
+      </div>
     </div>
   </div>`;
 }
@@ -1765,15 +2114,6 @@ function renderMobileAdmin() {
   else if (r === '#/a/mb') tab = 'mb';
   else if (r === '#/a/qr') tab = 'qr';
   else if (r === '#/a/bl') tab = 'bl';
-  const pend = pendingPays().length;
-  const tabs = [
-    {k:'ov', l:'📊 ภาพรวม', h:'#/a/ov'},
-    {k:'vr', l:`✅ สลิป${pend>0?` <span class="pill pill-amber" style="padding:1px 6px;font-size:10px;margin-left:3px">${pend}</span>`:''}`, h:'#/a/vr'},
-    {k:'ex', l:'💰 รายการ', h:'#/a/ex'},
-    {k:'mb', l:'👥 สมาชิก', h:'#/a/mb'},
-    {k:'qr', l:'📱 QR', h:'#/a/qr'},
-    {k:'bl', l:'💵 ยอด', h:'#/a/bl'},
-  ];
   let body;
   if (tab === 'vr') body = renderAdmVerify();
   else if (tab === 'ex') body = renderAdmExp();
@@ -1781,7 +2121,7 @@ function renderMobileAdmin() {
   else if (tab === 'qr') body = renderAdmQR();
   else if (tab === 'bl') body = renderAdmBalance();
   else body = renderAdmOverview();
-  return `<div class="m-shell" style="padding-bottom:30px">
+  return renderSideShell('admin', tab, `<div class="m-shell">
     <div class="m-topbar">
       <div style="width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,rgba(245,182,56,.22),rgba(245,182,56,.08));border:1px solid rgba(245,182,56,.32);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">👑</div>
       <div style="flex:1;min-width:0">
@@ -1790,11 +2130,8 @@ function renderMobileAdmin() {
       </div>
       <button class="btn-g" style="width:36px;height:36px;padding:0;border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--danger)" onclick="logout()">${svgIcon('close',16)}</button>
     </div>
-    <div class="m-tab-bar">
-      ${tabs.map(t=>`<button class="${tab===t.k?'on':''}" onclick="navigate('${t.h}')">${t.l}</button>`).join('')}
-    </div>
     <div class="m-main" style="padding-top:16px">${body}</div>
-  </div>`;
+  </div>`);
 }
 
 function renderAdmOverview() {
@@ -2133,52 +2470,9 @@ function renderDesktopUser() {
 }
 
 function renderDesktopShell({nav, activeNav, body, title, eyebrow, action=''}) {
-  const u = STATE.session?.role==='user' ? STATE.users.find(x=>x.id===STATE.session.uid) : null;
-  const pend = pendingPays().length;
-  const adminItems = [
-    {k:'ov', l:'ภาพรวม', i:'home', h:'#/a/ov'},
-    {k:'vr', l:'ตรวจสลิป', i:'check', h:'#/a/vr', badge:pend},
-    {k:'ex', l:'รายการ', i:'receipt', h:'#/a/ex'},
-    {k:'mb', l:'สมาชิก', i:'users', h:'#/a/mb'},
-    {k:'qr', l:'QR Code', i:'qr', h:'#/a/qr'},
-    {k:'bl', l:'ยอดเงิน', i:'cash', h:'#/a/bl'},
-  ];
-  const userItems = [
-    {k:'home', l:'หน้าหลัก', i:'home', h:'#/u/home'},
-    {k:'pay', l:'จ่ายเงิน', i:'send', h:'#/u/pay'},
-    {k:'chart', l:'สถิติ', i:'chart', h:'#/u/chart'},
-    {k:'lb', l:'อันดับ', i:'trophy', h:'#/u/lb'},
-  ];
-  const items = nav==='admin' ? adminItems : userItems;
   const isAdmin = nav==='admin';
-  return `<div class="d-shell">
-    <aside class="d-sidebar">
-      <div class="d-brand">
-        <div class="d-brand-logo">🏦</div>
-        <div style="min-width:0">
-          <div class="num" style="font-size:13px;font-weight:800;letter-spacing:1.5px;background:linear-gradient(135deg,#0F8A6B,#0A6B53);-webkit-background-clip:text;-webkit-text-fill-color:transparent">CLASS FUND</div>
-          <div style="font-size:11px;color:var(--ink-3);margin-top:2px">${esc(CLASS_NAME)}</div>
-        </div>
-      </div>
-      <nav class="d-nav">
-        ${items.map(it=>`<button class="${activeNav===it.k?'on':''}" onclick="${it.k==='pay'&&nav==='user'?'startPayWizard()':`navigate('${it.h}')`}">
-          ${svgIcon(it.i,18)} <span>${it.l}</span>
-          ${it.badge?`<span class="d-nav-badge">${it.badge}</span>`:''}
-        </button>`).join('')}
-      </nav>
-      <div class="d-user-card">
-        ${isAdmin ? `<div style="width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,rgba(245,182,56,.22),rgba(245,182,56,.08));border:1px solid rgba(245,182,56,.32);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">👑</div>
-        <div style="flex:1;min-width:0">
-          <div style="font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(ADMIN_NAME)} · เหรัญญิก</div>
-          <div style="font-size:11px;color:var(--ink-3)">Admin</div>
-        </div>` : u ? `${avatarHtml(u.name,36,'mint')}
-        <div style="flex:1;min-width:0">
-          <div style="font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(u.nick || stripPrefix(u.name))}</div>
-          <div style="font-size:11px;color:var(--ink-3)">PIN ${esc(u.pin||'-')}</div>
-        </div>` : ''}
-        <button class="btn-g" style="width:30px;height:30px;padding:0;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--danger);flex-shrink:0" onclick="logout()" title="ออกจากระบบ">${svgIcon('close',14)}</button>
-      </div>
-    </aside>
+  const pend = pendingPays().length;
+  return renderSideShell(isAdmin ? 'admin' : 'user', activeNav, `
     <main class="d-main">
       <header class="d-topbar">
         <div>
@@ -2191,8 +2485,7 @@ function renderDesktopShell({nav, activeNav, body, title, eyebrow, action=''}) {
         </div>
       </header>
       <section class="d-content fade-up">${body}</section>
-    </main>
-  </div>`;
+    </main>`);
 }
 
 function renderDesktopUserHome() {
