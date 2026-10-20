@@ -157,7 +157,11 @@ input::placeholder,textarea::placeholder{color:rgba(15,46,42,.32)}
 /* A gloss keeps sweeping along every fill, all the time (transform only, so it stays on the compositor) */
 .grow:not(.pending)::after{content:'';position:absolute;top:0;bottom:0;left:0;width:40%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);transform:translateX(-100%);animation:barSheen 2.8s ease-in-out infinite;animation-delay:calc(var(--gd,.3s) + .9s)}
 @keyframes barSheen{0%{transform:translateX(-100%)}45%,100%{transform:translateX(260%)}}
-@media (prefers-reduced-motion:reduce){ .bar > .pending::before,.grow-run,.grow::after{animation:none} }
+/* Gold goal bars: light diagonal stripes keep marching, like a "working on it" progress bar.
+   One stripe period is 14px across, i.e. 14 / cos45° ≈ 19.8px along the bar. */
+.grow.stripes::before{content:'';position:absolute;top:0;bottom:0;left:-40px;right:0;background:repeating-linear-gradient(45deg,rgba(255,255,255,.38) 0 7px,rgba(255,255,255,0) 7px 14px);animation:stripeGold 1s linear infinite}
+@keyframes stripeGold{to{transform:translateX(19.8px)}}
+@media (prefers-reduced-motion:reduce){ .bar > .pending::before,.grow-run,.grow::after,.grow.stripes::before{animation:none} }
 
 /* ============== MOBILE LAYOUT ============== */
 .m-shell{min-height:100vh;padding-bottom:90px;position:relative;z-index:1}
@@ -1851,7 +1855,7 @@ function renderMobileHome() {
             <span class="num" style="font-size:12px;font-weight:700">${pct.toFixed(0)}%</span>
           </div>
           <div style="height:8px;background:rgba(255,255,255,.18);border-radius:5px;overflow:hidden">
-            <div class="grow" style="height:100%;width:${pct.toFixed(1)}%;background:linear-gradient(90deg,#F5B638,#FFD56A);border-radius:5px;box-shadow:0 0 12px rgba(245,182,56,.65);transition:width .8s cubic-bezier(.34,1.4,.64,1)"></div>
+            <div class="grow stripes" style="height:100%;width:${pct.toFixed(1)}%;background:linear-gradient(90deg,#F5B638,#FFD56A);border-radius:5px;box-shadow:0 0 12px rgba(245,182,56,.65);transition:width .8s cubic-bezier(.34,1.4,.64,1)"></div>
           </div>
           <div style="margin-top:8px;font-size:11px;opacity:.85"><b class="num">${thb(got)}</b> / ${thb(target)}</div>
         </div>
@@ -2321,7 +2325,7 @@ function renderAdmOverview() {
         <span style="font-size:12px;opacity:.75">/ ${thb(target)}</span>
       </div>
       <div style="height:9px;border-radius:5px;background:rgba(255,255,255,.18);overflow:hidden">
-        <div class="grow" style="height:100%;width:${pct.toFixed(1)}%;background:linear-gradient(90deg,#F5B638,#FFD56A);border-radius:5px;box-shadow:0 0 12px rgba(245,182,56,.7);transition:width .8s"></div>
+        <div class="grow stripes" style="height:100%;width:${pct.toFixed(1)}%;background:linear-gradient(90deg,#F5B638,#FFD56A);border-radius:5px;box-shadow:0 0 12px rgba(245,182,56,.7);transition:width .8s"></div>
       </div>
       <div style="margin-top:10px;font-size:11px;opacity:.85">เหลืออีก <b>${thb(target-got)}</b> ก็ถึงเป้า · ${ok.length} รายการยืนยันแล้ว 🚀</div>
     </div>
@@ -2667,7 +2671,7 @@ function renderDesktopUserHome() {
               <span class="num" style="font-size:14px;font-weight:700">${pct.toFixed(0)}%</span>
             </div>
             <div style="height:10px;background:rgba(255,255,255,.18);border-radius:5px;overflow:hidden">
-              <div class="grow" style="height:100%;width:${pct.toFixed(1)}%;background:linear-gradient(90deg,#F5B638,#FFD56A);border-radius:5px;box-shadow:0 0 14px rgba(245,182,56,.7);transition:width .8s"></div>
+              <div class="grow stripes" style="height:100%;width:${pct.toFixed(1)}%;background:linear-gradient(90deg,#F5B638,#FFD56A);border-radius:5px;box-shadow:0 0 14px rgba(245,182,56,.7);transition:width .8s"></div>
             </div>
             <div style="margin-top:8px;font-size:12px;opacity:.85"><b class="num">${thb(got)}</b> / ${thb(target)}</div>
           </div>
