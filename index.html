@@ -387,7 +387,7 @@ input::placeholder,textarea::placeholder{color:rgba(15,46,42,.32)}
 const SUPABASE_URL = 'https://jqzptcqrmzqsifhitzxi.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxenB0Y3FybXpxc2lmaGl0enhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5NTY4NzksImV4cCI6MjA5NDUzMjg3OX0.BI7Izly2-2PymjTfiT7wyAsAv75sDUb9cvdmIZuhZMM';
 const ADMIN_PASS   = 'TtKk0814414064';
-const INIT_BALANCE = 7262;
+const INIT_BALANCE = 2108;   // money in the fund when term 2/2569 started
 const CLAUDE_MODEL = 'claude-sonnet-4-5';
 const CLASS_NAME   = 'ม.6/9 · ระยอง';
 const ADMIN_NAME   = 'ตาต้า';
@@ -434,10 +434,38 @@ const SEED_USERS = [
   {id:'u37', name:'นางสาวสุนทรา ทองเรือง',        nick:'ฟ้าใส',    pin:'43592'},
 ];
 const SEED_EXP = [
-  {id:'e1', name:'เก็บเงินเทอม 1/2569 📚',  amount:150, desc:'ค่าบำรุงห้องเรียน ภาคเรียนที่ 1 ปีการศึกษา 2569', at:Date.now()},
-  {id:'e2', name:'ค่าประกันอุบัติเหตุ 🛡️',  amount:400, desc:'คุ้มครองทั้งปีการศึกษา 2569', at:Date.now()+864e5},
-  {id:'e3', name:'ค่าเข็มขัดนักเรียน 🎓',  amount:60,  desc:'เข็มขัดประจำห้อง', at:Date.now()+2*864e5},
+  {id:'t2-2569', name:'จ่ายเงินห้องรายเทอม เทอม 2 📚', amount:150, desc:'ค่าบำรุงห้องเรียน ภาคเรียนที่ 2 ปีการศึกษา 2569', at:Date.now()},
 ];
+
+// One-time switch to term 2/2569. Runs once, from whichever device first loads this version:
+// removes the old expense items and sets the carried-over balance to what the fund holds today.
+// Members, the QR code and every payment row (with its slip) stay in the database untouched;
+// payments for removed items are just hidden (see setPayments).
+const MIGRATION_KEY = 'migr_term2_2569';
+async function runMigrations(cfgs) {
+  if (cfgs.some(r => r.key === MIGRATION_KEY)) return;
+  try {
+    const keep = new Set(SEED_EXP.map(e => e.id));
+    for (const e of STATE.expenses.filter(e => !keep.has(e.id))) {
+      const { error } = await db.from('expenses').delete().eq('id', e.id);
+      if (error) throw error;
+    }
+    let r = await db.from('config').upsert({key:'savedBalance', value:String(INIT_BALANCE)});
+    if (r.error) throw r.error;
+    r = await db.from('config').upsert({key:MIGRATION_KEY, value:new Date().toISOString()});
+    if (r.error) throw r.error;
+    STATE.expenses = STATE.expenses.filter(e => keep.has(e.id));
+    STATE.savedBalance = INIT_BALANCE;
+  } catch (err) {
+    console.error('term-2 migration failed; will retry on next load', err);
+  }
+}
+
+// Only payments for items that still exist count anywhere in the app; the rest stay stored as records.
+function setPayments(rows) {
+  STATE.allPayments = rows;
+  STATE.payments = rows.filter(p => STATE.expenses.some(e => e.id === p.eid));
+}
 
 // ── Device detection (set once, no resize) ──
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 900;
@@ -555,12 +583,13 @@ async function loadAll() {
         STATE.expenses = eRes.data;
       }
     }
-    STATE.payments = (pRes.data||[]).map(p => ({...p, paidAt: p.paid_at}));
     const cfgs = cRes.data || [];
     const qrRow = cfgs.find(r => r.key==='qr');
     const balRow = cfgs.find(r => r.key==='savedBalance');
     if (qrRow?.value) STATE.qr = qrRow.value;
     if (balRow?.value) STATE.savedBalance = +balRow.value;
+    await runMigrations(cfgs);
+    setPayments((pRes.data||[]).map(p => ({...p, paidAt: p.paid_at})));
     return true;
   } catch(err) {
     console.error('loadAll error', err);
@@ -572,12 +601,14 @@ function subscribeRealtime() {
   db.channel('class_fund')
     .on('postgres_changes', {event:'*', schema:'public', table:'payments'}, async () => {
       const {data} = await db.from('payments').select('*').order('paid_at');
-      STATE.payments = (data||[]).map(p=>({...p,paidAt:p.paid_at}));
+      setPayments((data||[]).map(p=>({...p,paidAt:p.paid_at})));
       render();
     })
     .on('postgres_changes', {event:'*', schema:'public', table:'expenses'}, async () => {
       const {data} = await db.from('expenses').select('*').order('at');
       STATE.expenses = data||[];
+      // re-filter from every payment we know of, including ones just sent from this device
+      setPayments([...new Map([...(STATE.allPayments||[]), ...STATE.payments].map(p => [p.id, p])).values()]);
       render();
     })
     .on('postgres_changes', {event:'*', schema:'public', table:'users'}, async () => {
@@ -1370,12 +1401,12 @@ function renderWelcome() {
             <div style="font-size:12px;opacity:.85">ในกระเป๋าห้องตอนนี้</div>
             <div class="num-hero" style="margin-top:6px"><span style="font-size:22px;font-weight:500;margin-right:3px;opacity:.85">฿</span>${cnum(grand,'welcome-grand')}</div>
           </div>
-          <div class="wl-ring" role="img" aria-label="เก็บได้ ${pct}% ของเป้าปีนี้">
+          <div class="wl-ring" role="img" aria-label="เก็บได้ ${pct}% ของเป้าเทอมนี้">
             <svg viewBox="0 0 80 80"><circle class="trk" cx="40" cy="40" r="34"/><circle class="bar" cx="40" cy="40" r="34" pathLength="100" style="--off:${100 - pct}"/></svg>
             <b>${pct}%<small>ของเป้า</small></b>
           </div>
         </div>
-        <div class="wl-meta"><span>เก็บปีนี้ <b class="num">${thb(got)}</b> / ${thb(target)}</span><span>ยกมา ${thb(STATE.savedBalance)}</span></div>
+        <div class="wl-meta"><span>เก็บเทอมนี้ <b class="num">${thb(got)}</b> / ${thb(target)}</span><span>ยกมา ${thb(STATE.savedBalance)}</span></div>
         <div class="wl-avs"><span>${avs}</span><span><b class="num" style="margin-right:4px">${STATE.users.length}</b>คนรวมเงินกัน</span></div>
       </section>
 
@@ -1844,14 +1875,14 @@ function renderMobileHome() {
       <div style="position:relative">
         <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;opacity:.86;margin-bottom:4px">
           <span>ในกระเป๋าห้อง</span>
-          <span class="pill pill-ghost" style="font-size:10px">+${thb(got)} ปีนี้</span>
+          <span class="pill pill-ghost" style="font-size:10px">+${thb(got)} เทอมนี้</span>
         </div>
         <div class="num-hero">
           <span style="font-size:24px;font-weight:500;margin-right:3px;opacity:.85">฿</span>${cnum(grand,'home-grand')}
         </div>
         <div style="margin-top:14px;padding-top:11px;border-top:1px solid rgba(255,255,255,.16)">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-            <span style="font-size:11px;opacity:.82">เป้า ปี 2569</span>
+            <span style="font-size:11px;opacity:.82">เป้าเทอม 2/2569</span>
             <span class="num" style="font-size:12px;font-weight:700">${pct.toFixed(0)}%</span>
           </div>
           <div style="height:8px;background:rgba(255,255,255,.18);border-radius:5px;overflow:hidden">
@@ -2108,8 +2139,8 @@ function renderMobileChart() {
   const got = totalVerified();
   const grand = STATE.savedBalance + got;
   const stats = [
-    {l:'ยกมา ปี 68', n:STATE.savedBalance, ck:'chart-saved', c:'#D69A1F', i:'wallet', iconBg:'rgba(245,182,56,.18)', bg:'linear-gradient(135deg,rgba(245,182,56,.14),rgba(245,182,56,.04))', ring:'rgba(245,182,56,.30)'},
-    {l:'เก็บได้ ปี 69', n:got, ck:'chart-got', c:'#0A6B53', i:'cash', iconBg:'rgba(15,138,107,.16)', bg:'linear-gradient(135deg,rgba(15,138,107,.12),rgba(15,138,107,.04))', ring:'rgba(15,138,107,.26)'},
+    {l:'ยอดยกมา', n:STATE.savedBalance, ck:'chart-saved', c:'#D69A1F', i:'wallet', iconBg:'rgba(245,182,56,.18)', bg:'linear-gradient(135deg,rgba(245,182,56,.14),rgba(245,182,56,.04))', ring:'rgba(245,182,56,.30)'},
+    {l:'เก็บได้เทอมนี้', n:got, ck:'chart-got', c:'#0A6B53', i:'cash', iconBg:'rgba(15,138,107,.16)', bg:'linear-gradient(135deg,rgba(15,138,107,.12),rgba(15,138,107,.04))', ring:'rgba(15,138,107,.26)'},
     {l:'รวมในกระเป๋า', n:grand, ck:'chart-grand', c:'#063D2F', i:'wallet', iconBg:'rgba(10,107,83,.18)', bg:'linear-gradient(135deg,rgba(10,107,83,.14),rgba(10,107,83,.04))', ring:'rgba(10,107,83,.30)'},
   ];
   return `${renderMobileTopUser()}
@@ -2295,8 +2326,8 @@ function renderAdmOverview() {
   const pct = target>0 ? Math.min(100, got/target*100) : 0;
   const today = new Date().toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'});
   const stats = [
-    {l:'ยกมา ปี 68', n:STATE.savedBalance, ck:'ov-saved', prefix:'฿', c:'#D69A1F', i:'wallet', bg:'var(--accent-tint)', ring:'rgba(245,182,56,.3)'},
-    {l:'เก็บได้ ปี 69', n:got, ck:'ov-got', prefix:'฿', c:'#0A6B53', i:'cash', bg:'var(--primary-tint)', ring:'rgba(15,138,107,.26)'},
+    {l:'ยอดยกมา', n:STATE.savedBalance, ck:'ov-saved', prefix:'฿', c:'#D69A1F', i:'wallet', bg:'var(--accent-tint)', ring:'rgba(245,182,56,.3)'},
+    {l:'เก็บได้เทอมนี้', n:got, ck:'ov-got', prefix:'฿', c:'#0A6B53', i:'cash', bg:'var(--primary-tint)', ring:'rgba(15,138,107,.26)'},
     {l:'รวมทั้งหมด', n:grand, ck:'ov-grand', prefix:'฿', c:'#063D2F', i:'wallet', bg:'#E8EEF7', ring:'rgba(31,61,112,.22)'},
     {l:'รอตรวจ', n:pend, ck:'ov-pend', prefix:'', c:'#A66A0F', i:'check', bg:'var(--warning-tint)', ring:'rgba(232,154,42,.3)'},
   ];
@@ -2317,7 +2348,7 @@ function renderAdmOverview() {
   ${target>0?`<div class="hero-mint fade-up" style="margin-bottom:14px;padding:18px 20px">
     <div style="position:relative">
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;gap:10px">
-        <span style="font-size:12px;opacity:.85">เป้า ปี 2569 · ${STATE.users.length} คน</span>
+        <span style="font-size:12px;opacity:.85">เป้าเทอม 2/2569 · ${STATE.users.length} คน</span>
         <span class="pill pill-ghost" style="font-size:11px;padding:4px 10px">${pct.toFixed(0)}%</span>
       </div>
       <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:12px;flex-wrap:wrap">
@@ -2564,11 +2595,11 @@ function renderAdmBalance() {
       <h3 class="h2" style="margin-bottom:18px;text-align:center">💵 ยอดเงินสะสม</h3>
       <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
         <div style="background:var(--accent-tint);border:1px solid rgba(245,182,56,.28);border-radius:14px;padding:18px;text-align:center">
-          <div style="font-size:11px;color:var(--ink-3);margin-bottom:4px">ยอดสะสม ปี 2568 (ยกมา)</div>
+          <div style="font-size:11px;color:var(--ink-3);margin-bottom:4px">ยอดยกมา</div>
           <div class="num" style="font-size:28px;font-weight:800;color:#D69A1F">${thb(STATE.savedBalance)}</div>
         </div>
         <div style="background:var(--primary-tint);border:1px solid rgba(15,138,107,.22);border-radius:14px;padding:18px;text-align:center">
-          <div style="font-size:11px;color:var(--ink-3);margin-bottom:4px">เก็บได้ ปี 2569 (ยืนยันแล้ว)</div>
+          <div style="font-size:11px;color:var(--ink-3);margin-bottom:4px">เก็บได้เทอมนี้ (ยืนยันแล้ว)</div>
           <div class="num" style="font-size:28px;font-weight:800;color:var(--primary)">${thb(got)}</div>
         </div>
         <div style="background:linear-gradient(135deg,#0F8A6B,#0A6B53);color:#fff;border-radius:14px;padding:18px;text-align:center">
@@ -2576,7 +2607,7 @@ function renderAdmBalance() {
           <div class="num" style="font-size:30px;font-weight:800">${thb(grand)}</div>
         </div>
       </div>
-      <h4 style="font-size:13px;font-weight:600;margin-bottom:10px;color:var(--ink-2)">✏️ แก้ไขยอดสะสม ปี 2568</h4>
+      <h4 style="font-size:13px;font-weight:600;margin-bottom:10px;color:var(--ink-2)">✏️ แก้ไขยอดยกมา</h4>
       <div style="display:flex;gap:8px">
         <input id="bal-inp" type="number" value="${STATE.savedBalance}"/>
         <button class="btn btn-p" onclick="updateBal()" style="white-space:nowrap">บันทึก</button>
@@ -2660,14 +2691,14 @@ function renderDesktopUserHome() {
         <div style="position:relative">
           <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;opacity:.85;margin-bottom:6px">
             <span>ในกระเป๋าห้อง</span>
-            <span class="pill pill-ghost" style="font-size:11px">+${thb(got)} ปีนี้</span>
+            <span class="pill pill-ghost" style="font-size:11px">+${thb(got)} เทอมนี้</span>
           </div>
           <div class="num-hero" style="font-size:54px">
             <span style="font-size:28px;font-weight:500;margin-right:4px;opacity:.85">฿</span>${thbb(grand)}
           </div>
           <div style="margin-top:18px;padding-top:14px;border-top:1px solid rgba(255,255,255,.16)">
             <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
-              <span style="font-size:12px;opacity:.85">เป้า ปี 2569 · ${STATE.users.length} คน</span>
+              <span style="font-size:12px;opacity:.85">เป้าเทอม 2/2569 · ${STATE.users.length} คน</span>
               <span class="num" style="font-size:14px;font-weight:700">${pct.toFixed(0)}%</span>
             </div>
             <div style="height:10px;background:rgba(255,255,255,.18);border-radius:5px;overflow:hidden">
