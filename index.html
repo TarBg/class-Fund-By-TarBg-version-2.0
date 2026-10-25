@@ -480,6 +480,45 @@ async function purgeOldSeeds() {
   }
 }
 
+// Slip images are big (often 0.2–2 MB each as base64). Loading them with the payment list made the
+// query hit Supabase's statement timeout once enough slips piled up, and the app then showed no
+// payments at all. So lists load without the image, and the admin pages fetch slips by id on demand.
+const PAY_COLS = 'id,uid,eid,status,paid_at,ai_verdict,ai_confidence,ai_note,ai_issues';
+const SLIPS = {};            // payment id -> data URL ('' = this payment has no slip)
+const slipWanted = new Set(), slipInFlight = new Set();
+let slipTimer = 0;
+// undefined = not loaded yet, '' = no slip, otherwise the image
+function slipOf(p) { return p.slip || SLIPS[p.id]; }
+function needSlips(ids) {
+  ids.forEach(id => { if (!(id in SLIPS) && !slipInFlight.has(id)) slipWanted.add(id); });
+  if (slipWanted.size && !slipTimer) slipTimer = setTimeout(pumpSlips, 0);
+}
+async function fetchSlips(ids) {
+  const todo = ids.filter(id => !(id in SLIPS));
+  // a few at a time keeps each request far below the timeout
+  for (let i = 0; i < todo.length; i += 3) {
+    const batch = todo.slice(i, i + 3);
+    batch.forEach(id => slipInFlight.add(id));
+    const { data, error } = await db.from('payments').select('id,slip').in('id', batch);
+    batch.forEach(id => slipInFlight.delete(id));
+    if (error) { console.error('Load slips error:', error); continue; }
+    batch.forEach(id => { SLIPS[id] = ''; });
+    (data || []).forEach(r => { SLIPS[r.id] = r.slip || ''; });
+  }
+}
+async function pumpSlips() {
+  slipTimer = 0;
+  const ids = [...slipWanted]; slipWanted.clear();
+  await fetchSlips(ids);
+  render();
+}
+async function zoomSlip(id) {
+  if (!(id in SLIPS)) { showToast('กำลังโหลดสลิป…','info'); await fetchSlips([id]); }
+  if (SLIPS[id]) openSlipZoom(SLIPS[id]); else showToast('รายการนี้ไม่มีรูปสลิป','warn');
+}
+const SLIP_LOADING = '<div style="padding:40px 16px;text-align:center;border-radius:11px;background:var(--surface-2);border:1px solid var(--border);color:var(--ink-3);font-size:12px"><span class="loader" style="vertical-align:middle;margin-right:8px"></span>กำลังโหลดสลิป…</div>';
+const SLIP_NONE = '<div style="padding:40px 16px;text-align:center;border-radius:11px;background:var(--surface-2);border:1px solid var(--border);color:var(--ink-3);font-size:12px">ไม่มีรูปสลิป</div>';
+
 // Only payments for items that still exist count anywhere in the app; the rest stay stored as records.
 function setPayments(rows) {
   STATE.allPayments = rows;
@@ -577,7 +616,7 @@ async function loadAll() {
     const [uRes, eRes, pRes, cRes] = await Promise.all([
       db.from('users').select('*').order('id'),
       db.from('expenses').select('*').order('at'),
-      db.from('payments').select('*').order('paid_at'),
+      db.from('payments').select(PAY_COLS).order('paid_at'),
       db.from('config').select('*'),
     ]);
     if (uRes.error || eRes.error) {
@@ -608,6 +647,11 @@ async function loadAll() {
     if (qrRow?.value) STATE.qr = qrRow.value;
     if (balRow?.value) STATE.savedBalance = +balRow.value;
     STATE.adminHash = cfgs.find(r => r.key==='admin_pass_hash')?.value || '';
+    if (pRes.error) {
+      // Don't pretend nobody has paid: keep going, but tell the user the list didn't load
+      console.error('Load payments error:', pRes.error);
+      STATE.payLoadError = true;
+    }
     await runMigrations(cfgs);
     if (cfgs.some(r => r.key === MIGRATION_KEY) || STATE.savedBalance === INIT_BALANCE) await purgeOldSeeds();
     setPayments((pRes.data||[]).map(p => ({...p, paidAt: p.paid_at})));
@@ -621,7 +665,8 @@ async function loadAll() {
 function subscribeRealtime() {
   db.channel('class_fund')
     .on('postgres_changes', {event:'*', schema:'public', table:'payments'}, async () => {
-      const {data} = await db.from('payments').select('*').order('paid_at');
+      const {data, error} = await db.from('payments').select(PAY_COLS).order('paid_at');
+      if (error) { console.error('Refresh payments error:', error); return; }
       setPayments((data||[]).map(p=>({...p,paidAt:p.paid_at})));
       render();
     })
@@ -660,6 +705,7 @@ async function initApp() {
   // Hash routing
   window.addEventListener('hashchange', () => { STATE.route = location.hash || '#/'; render(); });
   render();
+  if (STATE.payLoadError) showToast('โหลดรายการจ่ายเงินไม่สำเร็จ ลองรีเฟรชอีกครั้ง','error');
 }
 
 // ── Router helpers ──
@@ -755,13 +801,15 @@ async function callClaudeVerify(slipDataUrl, expense) {
 
 async function runAiOnPending() {
   if (!STATE.aiKey || STATE.aiRunning) return;
-  const queue = STATE.payments.filter(p => p.status==='pending' && !p.ai_verdict && p.slip);
+  const queue = STATE.payments.filter(p => p.status==='pending' && !p.ai_verdict);
   if (!queue.length) return;
   STATE.aiRunning = true;
   for (const p of queue) {
     const e = STATE.expenses.find(x => x.id===p.eid);
     if (!e) continue;
-    const result = await callClaudeVerify(p.slip, e);
+    await fetchSlips([p.id]);
+    if (!slipOf(p)) continue;
+    const result = await callClaudeVerify(slipOf(p), e);
     if (result) {
       const update = {
         ai_verdict: result.verdict || 'suspicious',
@@ -2436,7 +2484,7 @@ function renderAdmOverview() {
 function renderAdmVerify() { return renderAdmVerifyQueue() + renderOldSlips(); }
 function renderDesktopAdmVerify() { return renderDesktopAdmVerifyQueue() + renderOldSlips(); }
 function oldSlips() {
-  return (STATE.allPayments || []).filter(p => p.slip && !STATE.expenses.some(e => e.id === p.eid))
+  return (STATE.allPayments || []).filter(p => !STATE.expenses.some(e => e.id === p.eid))
     .sort((a, b) => (b.paid_at || 0) - (a.paid_at || 0));
 }
 function renderOldSlips() {
@@ -2446,7 +2494,7 @@ function renderOldSlips() {
   return `<details class="card" style="padding:14px 16px;margin-top:14px">
     <summary style="cursor:pointer;display:flex;align-items:center;gap:10px;list-style:none">
       <span style="font-size:18px">📁</span>
-      <span style="flex:1;min-width:0"><b style="font-size:14px">สลิปจากรายการเก่า</b><span style="display:block;font-size:11px;color:var(--ink-3)">${list.length} ใบ${waiting ? ` · รอตรวจ ${waiting}` : ''} · เก็บไว้เป็นหลักฐาน ไม่นับรวมยอดเทอมนี้</span></span>
+      <span style="flex:1;min-width:0"><b style="font-size:14px">สลิปจากรายการเก่า</b><span style="display:block;font-size:11px;color:var(--ink-3)">${list.length} รายการ${waiting ? ` · รอตรวจ ${waiting}` : ''} · เก็บไว้เป็นหลักฐาน ไม่นับรวมยอดเทอมนี้</span></span>
       <span class="pill pill-mint" style="font-size:11px">แตะเพื่อดู</span>
     </summary>
     <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
@@ -2455,7 +2503,7 @@ function renderOldSlips() {
         const item = OLD_SEED[p.eid] || { name:'รายการเก่า', amount:null };
         const ok = p.status === 'verified';
         return `<div style="display:flex;align-items:center;gap:12px;padding:8px;border:1px solid var(--border);border-radius:12px;background:#fff">
-          <img src="${p.slip}" alt="สลิป" loading="lazy" onclick="openOldSlip('${esc(p.id)}')" style="width:44px;height:60px;object-fit:cover;border-radius:7px;border:1px solid var(--border-strong);cursor:zoom-in;flex-shrink:0"/>
+          <button class="btn btn-g" style="font-size:11px;padding:6px 9px;flex-shrink:0" onclick="zoomSlip('${esc(p.id)}')">🧾 ดูสลิป</button>
           <div style="flex:1;min-width:0">
             <div style="font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(u ? (u.nick || stripPrefix(u.name)) : 'ไม่ทราบชื่อ')}</div>
             <div style="font-size:11px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(item.name)}${item.amount ? ' · ' + thb(item.amount) : ''}${p.paid_at ? ' · ' + fmtDate(p.paid_at) : ''}</div>
@@ -2467,7 +2515,6 @@ function renderOldSlips() {
     </div>
   </details>`;
 }
-function openOldSlip(id) { const p = (STATE.allPayments || []).find(x => x.id === id); if (p?.slip) openSlipZoom(p.slip); }
 async function approveOldSlip(id) {
   STATE.allPayments = (STATE.allPayments || []).map(p => p.id === id ? { ...p, status:'verified' } : p);
   render();
@@ -2530,7 +2577,9 @@ function renderAdmVerifyQueue() {
         </div>
         ${(note||issues.length)?`<div style="font-size:11px;color:var(--ink-2);margin-top:6px;line-height:1.55">${esc(note || issues.map(x=>'· '+x).join(' '))}</div>`:''}
       </div>` : '';
-      const slip = p.slip ? `<div style="margin-bottom:10px"><img src="${p.slip}" style="max-width:100%;max-height:240px;border-radius:11px;object-fit:contain;border:1px solid var(--border);background:var(--surface-2);cursor:zoom-in" onclick="openSlipZoom('${p.slip}')"/></div>` : '';
+      const src = slipOf(p);
+      if (src === undefined) needSlips([p.id]);
+      const slip = `<div style="margin-bottom:10px">${src === undefined ? SLIP_LOADING : !src ? SLIP_NONE : `<img src="${src}" style="max-width:100%;max-height:240px;border-radius:11px;object-fit:contain;border:1px solid var(--border);background:var(--surface-2);cursor:zoom-in" onclick="zoomSlip('${esc(p.id)}')"/>`}</div>`;
       return `<div class="card slide-in" style="padding:14px;border-color:${v?v.ring:'var(--border)'};animation-delay:${Math.min(i*.04,.4)}s">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
           ${avatarHtml(u?.name, 38, 'mint')}
@@ -3036,7 +3085,7 @@ function renderDesktopAdmVerifyQueue() {
         </div>
         <div style="display:grid;grid-template-columns:340px 1fr;gap:18px;align-items:start">
           <div>
-            ${sel.slip ? `<img src="${sel.slip}" style="width:100%;max-height:480px;border-radius:12px;border:1px solid var(--border);background:var(--surface-2);object-fit:contain;cursor:zoom-in" onclick="openSlipZoom('${sel.slip}')"/>` : `<div style="padding:80px 20px;text-align:center;background:var(--surface-2);border-radius:12px;color:var(--ink-3)">ไม่มีรูปสลิป</div>`}
+            ${(() => { const src = slipOf(sel); if (src === undefined) { needSlips([sel.id]); return SLIP_LOADING; } return src ? `<img src="${src}" style="width:100%;max-height:480px;border-radius:12px;border:1px solid var(--border);background:var(--surface-2);object-fit:contain;cursor:zoom-in" onclick="zoomSlip('${esc(sel.id)}')"/>` : `<div style="padding:80px 20px;text-align:center;background:var(--surface-2);border-radius:12px;color:var(--ink-3)">ไม่มีรูปสลิป</div>`; })()}
           </div>
           <div>
             ${v ? `<div style="padding:16px 18px;border-radius:14px;background:${v.bg};border:1px solid ${v.border};margin-bottom:14px">
