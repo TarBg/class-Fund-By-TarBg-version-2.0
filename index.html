@@ -466,6 +466,20 @@ async function runMigrations(cfgs) {
   }
 }
 
+// The pre-term-2 version of the site seeds e1/e2/e3 on every load, so if anyone opens an old copy
+// they come back. After the migration has run, remove them again whenever they show up.
+// (Items the admin adds get ids like 'e1729…', so these three never clash with real ones.)
+const OLD_SEED = { e1:{name:'เก็บเงินเทอม 1/2569', amount:150}, e2:{name:'ค่าประกันอุบัติเหตุ', amount:400}, e3:{name:'ค่าเข็มขัดนักเรียน', amount:60} };
+async function purgeOldSeeds() {
+  const back = STATE.expenses.filter(e => OLD_SEED[e.id]);
+  if (!back.length) return;
+  STATE.expenses = STATE.expenses.filter(e => !OLD_SEED[e.id]);
+  for (const e of back) {
+    const { error } = await db.from('expenses').delete().eq('id', e.id);
+    if (error) console.error('purgeOldSeeds', error);
+  }
+}
+
 // Only payments for items that still exist count anywhere in the app; the rest stay stored as records.
 function setPayments(rows) {
   STATE.allPayments = rows;
@@ -595,6 +609,7 @@ async function loadAll() {
     if (balRow?.value) STATE.savedBalance = +balRow.value;
     STATE.adminHash = cfgs.find(r => r.key==='admin_pass_hash')?.value || '';
     await runMigrations(cfgs);
+    if (cfgs.some(r => r.key === MIGRATION_KEY) || STATE.savedBalance === INIT_BALANCE) await purgeOldSeeds();
     setPayments((pRes.data||[]).map(p => ({...p, paidAt: p.paid_at})));
     return true;
   } catch(err) {
@@ -613,6 +628,7 @@ function subscribeRealtime() {
     .on('postgres_changes', {event:'*', schema:'public', table:'expenses'}, async () => {
       const {data} = await db.from('expenses').select('*').order('at');
       STATE.expenses = data||[];
+      await purgeOldSeeds();
       // re-filter from every payment we know of, including ones just sent from this device
       setPayments([...new Map([...(STATE.allPayments||[]), ...STATE.payments].map(p => [p.id, p])).values()]);
       render();
@@ -2131,7 +2147,7 @@ function renderPayStep3() {
           <div class="num" style="font-size:11px;color:var(--ink-3);letter-spacing:.4px">#${refNum}</div>
         </div>
         ${items.map(e=>{
-          const emoji = (e.name.match(/[📚🛡️🎓🏦💵🎯🎁🎉]/)||['💰'])[0];
+          const emoji = (e.name.match(/📚|🛡️|🎓|🏦|💵|🎯|🎁|🎉/u)||['💰'])[0];
           return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;font-size:13px">
             <span style="font-size:16px">${emoji}</span>
             <span style="flex:1;color:var(--ink-2);text-align:left">${esc(e.name.replace(/ ?[📚🛡️🎓].*$/,''))}</span>
@@ -2417,7 +2433,48 @@ function renderAdmOverview() {
   </div>`;
 }
 
-function renderAdmVerify() {
+function renderAdmVerify() { return renderAdmVerifyQueue() + renderOldSlips(); }
+function renderDesktopAdmVerify() { return renderDesktopAdmVerifyQueue() + renderOldSlips(); }
+function oldSlips() {
+  return (STATE.allPayments || []).filter(p => p.slip && !STATE.expenses.some(e => e.id === p.eid))
+    .sort((a, b) => (b.paid_at || 0) - (a.paid_at || 0));
+}
+function renderOldSlips() {
+  const list = oldSlips();
+  if (!list.length) return '';
+  const waiting = list.filter(p => p.status === 'pending').length;
+  return `<details class="card" style="padding:14px 16px;margin-top:14px">
+    <summary style="cursor:pointer;display:flex;align-items:center;gap:10px;list-style:none">
+      <span style="font-size:18px">📁</span>
+      <span style="flex:1;min-width:0"><b style="font-size:14px">สลิปจากรายการเก่า</b><span style="display:block;font-size:11px;color:var(--ink-3)">${list.length} ใบ${waiting ? ` · รอตรวจ ${waiting}` : ''} · เก็บไว้เป็นหลักฐาน ไม่นับรวมยอดเทอมนี้</span></span>
+      <span class="pill pill-mint" style="font-size:11px">แตะเพื่อดู</span>
+    </summary>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
+      ${list.map(p => {
+        const u = STATE.users.find(x => x.id === p.uid);
+        const item = OLD_SEED[p.eid] || { name:'รายการเก่า', amount:null };
+        const ok = p.status === 'verified';
+        return `<div style="display:flex;align-items:center;gap:12px;padding:8px;border:1px solid var(--border);border-radius:12px;background:#fff">
+          <img src="${p.slip}" alt="สลิป" loading="lazy" onclick="openOldSlip('${esc(p.id)}')" style="width:44px;height:60px;object-fit:cover;border-radius:7px;border:1px solid var(--border-strong);cursor:zoom-in;flex-shrink:0"/>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(u ? (u.nick || stripPrefix(u.name)) : 'ไม่ทราบชื่อ')}</div>
+            <div style="font-size:11px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(item.name)}${item.amount ? ' · ' + thb(item.amount) : ''}${p.paid_at ? ' · ' + fmtDate(p.paid_at) : ''}</div>
+          </div>
+          ${ok ? '<span class="pill pill-mint" style="font-size:10px">ยืนยันแล้ว</span>'
+               : `<button class="btn btn-g" style="font-size:11px;padding:6px 10px" onclick="approveOldSlip('${esc(p.id)}')">อนุมัติ</button>`}
+        </div>`;
+      }).join('')}
+    </div>
+  </details>`;
+}
+function openOldSlip(id) { const p = (STATE.allPayments || []).find(x => x.id === id); if (p?.slip) openSlipZoom(p.slip); }
+async function approveOldSlip(id) {
+  STATE.allPayments = (STATE.allPayments || []).map(p => p.id === id ? { ...p, status:'verified' } : p);
+  render();
+  const { error } = await db.from('payments').update({ status:'verified' }).eq('id', id);
+  showToast(error ? 'บันทึกไม่สำเร็จ ลองอีกครั้ง' : 'อนุมัติแล้ว ✅', error ? 'error' : 'success');
+}
+function renderAdmVerifyQueue() {
   const pend = pendingPays();
   if (!pend.length) return `<div class="card" style="padding:50px 24px;text-align:center">
     <div style="display:inline-flex;align-items:center;justify-content:center;width:72px;height:72px;border-radius:50%;background:var(--primary-tint);font-size:34px;margin-bottom:14px">✅</div>
@@ -2766,7 +2823,7 @@ function renderDesktopUserHome() {
           const p = mine.find(x=>x.eid===e.id);
           const isOk = p?.status==='verified';
           const isPending = p?.status==='pending';
-          const emoji = (e.name.match(/[📚🛡️🎓🏦💵🎯🎁🎉]/)||['💰'])[0];
+          const emoji = (e.name.match(/📚|🛡️|🎓|🏦|💵|🎯|🎁|🎉/u)||['💰'])[0];
           return `<div class="slide-in" style="padding:14px 14px;display:flex;align-items:center;gap:14px;border-bottom:${i<STATE.expenses.length-1?'1px solid var(--border)':'none'};animation-delay:${i*.04}s">
             <div style="width:46px;height:46px;border-radius:13px;background:${isOk?'var(--primary-tint)':isPending?'var(--warning-tint)':'var(--surface-2)'};display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">${emoji}</div>
             <div style="flex:1;min-width:0">
@@ -2904,7 +2961,7 @@ function renderLeaderboardList() {
   </div>`;
 }
 
-function renderDesktopAdmVerify() {
+function renderDesktopAdmVerifyQueue() {
   const pend = pendingPays();
   if (!pend.length) return `<div class="card" style="padding:80px 24px;text-align:center">
     <div style="display:inline-flex;align-items:center;justify-content:center;width:90px;height:90px;border-radius:50%;background:var(--primary-tint);font-size:42px;margin-bottom:16px">✅</div>
