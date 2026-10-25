@@ -1426,6 +1426,8 @@ function unlockUI() {
 function render() {
   if (UI_LOCK) { RENDER_PENDING = true; return; }
   const app = document.getElementById('app');
+  const ae = document.activeElement;
+  const keepFocus = ae && ae.id && ae.tagName === 'INPUT' ? { id: ae.id, s: ae.selectionStart, e: ae.selectionEnd } : null;
   STATE._shell = null;
   if (STATE.loading) {
     app.innerHTML = renderLoading();
@@ -1452,6 +1454,10 @@ function render() {
   }
   paintToast();
   paintCountUps();
+  if (keepFocus) {
+    const el = document.getElementById(keepFocus.id);
+    if (el && el !== document.activeElement) { el.focus({ preventScroll: true }); try { el.setSelectionRange(keepFocus.s, keepFocus.e); } catch {} }
+  }
   const pageKey = [STATE.route, STATE.session?.role || '', STATE.session ? '' : STATE.loginStage, STATE.payStep].join('|');
   if (pageKey !== STATE._pageKey) { STATE._pageKey = pageKey; staggerIn(); }
   // Auto-focus AI on admin verify when key exists
@@ -2518,39 +2524,104 @@ function renderAdmOverview() {
   </div>`;
 }
 
-function renderAdmVerify() { return renderAdmVerifyQueue() + renderOldSlips(); }
-function renderDesktopAdmVerify() { return renderDesktopAdmVerifyQueue() + renderOldSlips(); }
+function renderAdmVerify() { return slipToolbar() + renderAdmVerifyQueue() + renderTermSlips() + renderOldSlips(); }
+function renderDesktopAdmVerify() { return slipToolbar() + renderDesktopAdmVerifyQueue() + renderTermSlips() + renderOldSlips(); }
 function oldSlips() {
   return (STATE.allPayments || []).filter(p => !STATE.expenses.some(e => e.id === p.eid))
     .sort((a, b) => (b.paid_at || 0) - (a.paid_at || 0));
 }
-function renderOldSlips() {
-  const list = oldSlips();
-  if (!list.length) return '';
-  const waiting = list.filter(p => p.status === 'pending').length;
-  return `<details class="card" style="padding:14px 16px;margin-top:14px">
+
+// Slips sent from this update on also show the time; older ones keep the date only
+const SLIP_TIME_FROM = Date.UTC(2026, 9, 25, 6, 0);   // 25 ต.ค. 2569, 13:00 น.
+function slipWhen(p) {
+  const t = p.paid_at || p.paidAt;
+  if (!t) return '';
+  return t >= SLIP_TIME_FROM ? `${fmtDateLong(t)} น.` : fmtDate(t);
+}
+// Class number = the number in the member id (u1 → เลขที่ 1)
+const userNo = u => parseInt(String(u?.id || '').replace(/\D/g, ''), 10) || 0;
+
+// Search (nickname, full name or class number) and sort, shared by the queue and the old-slips list
+function slipFilter(list) {
+  const q = (STATE.slipQ || '').trim().toLowerCase();
+  const who = p => STATE.users.find(x => x.id === p.uid);
+  let out = !q ? list : list.filter(p => {
+    const u = who(p);
+    return u && ((u.nick || '').toLowerCase().includes(q) || stripPrefix(u.name).toLowerCase().includes(q) || String(userNo(u)) === q);
+  });
+  const newest = (a, b) => (b.paid_at || 0) - (a.paid_at || 0);
+  const sort = STATE.slipSort || 'new';
+  if (sort === 'no') return [...out].sort((a, b) => userNo(who(a)) - userNo(who(b)) || newest(a, b));
+  // sort by the name shown in the rows (nickname, else full name)
+  const shown = p => { const u = who(p); return u ? (u.nick || stripPrefix(u.name)) : ''; };
+  if (sort === 'name') return [...out].sort((a, b) => shown(a).localeCompare(shown(b), 'th') || newest(a, b));
+  return [...out].sort(newest);
+}
+function slipToolbar() {
+  if (!STATE.payments.length && !oldSlips().length) return '';
+  const sort = STATE.slipSort || 'new';
+  const btn = (k, l) => `<button class="btn ${sort === k ? 'btn-p' : 'btn-g'}" style="font-size:12px;padding:8px 12px" onclick="setState({slipSort:'${k}'})">${l}</button>`;
+  return `<div class="card" style="padding:10px;margin-bottom:14px;display:flex;flex-wrap:wrap;align-items:center;gap:8px">
+    <div style="position:relative;flex:1 1 220px;min-width:0">
+      <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3);pointer-events:none">${svgIcon('search',16)}</span>
+      <input id="slip-q" type="search" placeholder="ค้นหาชื่อ ชื่อเล่น หรือเลขที่…" value="${esc(STATE.slipQ || '')}" autocomplete="off"
+        oninput="if(!event.isComposing){STATE.slipQ=this.value;render()}" oncompositionend="STATE.slipQ=this.value;render()"
+        style="padding-left:36px;border-radius:12px;width:100%"/>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+      <span style="font-size:11px;color:var(--ink-3)">เรียง</span>
+      ${btn('new', 'ล่าสุด')}${btn('no', 'เลขที่')}${btn('name', 'ชื่อ')}
+    </div>
+  </div>`;
+}
+const SLIP_NOT_FOUND = '<div class="card" style="padding:26px 20px;text-align:center;color:var(--ink-3);font-size:13px">ไม่พบชื่อที่ค้นหาในคิวรอตรวจ</div>';
+// One collapsible slip box. Rows: view-slip button, name + class number, item, amount, time, status.
+function slipBox({ icon, title, note, all, openKey, defaultOpen, itemOf, approve }) {
+  if (!all.length) return '';
+  const list = slipFilter(all);
+  const searching = !!(STATE.slipQ || '').trim();
+  const waiting = all.filter(p => p.status === 'pending').length;
+  const done = all.length - waiting;
+  const open = STATE[openKey] ?? defaultOpen;
+  return `<details class="card" style="padding:14px 16px;margin-top:14px" ${open || searching ? 'open' : ''} ontoggle="STATE.${openKey}=this.open">
     <summary style="cursor:pointer;display:flex;align-items:center;gap:10px;list-style:none">
-      <span style="font-size:18px">📁</span>
-      <span style="flex:1;min-width:0"><b style="font-size:14px">สลิปจากรายการเก่า</b><span style="display:block;font-size:11px;color:var(--ink-3)">${list.length} รายการ${waiting ? ` · รอตรวจ ${waiting}` : ''} · เก็บไว้เป็นหลักฐาน ไม่นับรวมยอดเทอมนี้</span></span>
-      <span class="pill pill-mint" style="font-size:11px">แตะเพื่อดู</span>
+      <span style="font-size:18px">${icon}</span>
+      <span style="flex:1;min-width:0"><b style="font-size:14px">${title}</b><span style="display:block;font-size:11px;color:var(--ink-3)">${searching ? `พบ ${list.length} จาก ${all.length}` : `${all.length} รายการ`} · ยืนยันแล้ว ${done}${waiting ? ` · รอตรวจ ${waiting}` : ''}${note ? ' · ' + note : ''}</span></span>
+      <span class="pill pill-mint" style="font-size:11px">${open || searching ? 'ซ่อน' : 'แตะเพื่อดู'}</span>
     </summary>
     <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
+      ${list.length ? '' : '<div style="padding:16px;text-align:center;color:var(--ink-3);font-size:12px">ไม่พบชื่อที่ค้นหา</div>'}
       ${list.map(p => {
         const u = STATE.users.find(x => x.id === p.uid);
-        const item = OLD_SEED[p.eid] || { name:'รายการเก่า', amount:null };
+        const item = itemOf(p);
         const ok = p.status === 'verified';
         return `<div style="display:flex;align-items:center;gap:12px;padding:8px;border:1px solid var(--border);border-radius:12px;background:#fff">
           <button class="btn btn-g" style="font-size:11px;padding:6px 9px;flex-shrink:0" onclick="zoomSlip('${esc(p.id)}')">🧾 ดูสลิป</button>
           <div style="flex:1;min-width:0">
-            <div style="font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(u ? (u.nick || stripPrefix(u.name)) : 'ไม่ทราบชื่อ')}</div>
-            <div style="font-size:11px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(item.name)}${item.amount ? ' · ' + thb(item.amount) : ''}${p.paid_at ? ' · ' + fmtDate(p.paid_at) : ''}</div>
+            <div style="font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(u ? (u.nick || stripPrefix(u.name)) : 'ไม่ทราบชื่อ')}${u ? ` <span style="font-weight:500;color:var(--ink-3);font-size:11px">· เลขที่ ${userNo(u)}</span>` : ''}</div>
+            <div style="font-size:11px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(item.name)}${item.amount ? ' · ' + thb(item.amount) : ''}${p.paid_at ? ' · ' + slipWhen(p) : ''}</div>
           </div>
           ${ok ? '<span class="pill pill-mint" style="font-size:10px">ยืนยันแล้ว</span>'
-               : `<button class="btn btn-g" style="font-size:11px;padding:6px 10px" onclick="approveOldSlip('${esc(p.id)}')">อนุมัติ</button>`}
+               : approve ? `<button class="btn btn-g" style="font-size:11px;padding:6px 10px" onclick="${approve}('${esc(p.id)}')">อนุมัติ</button>`
+               : '<span class="pill pill-amber" style="font-size:10px">รอตรวจ</span>'}
         </div>`;
       }).join('')}
     </div>
   </details>`;
+}
+// Every slip for the current term's items (approved or waiting); the queue above only shows waiting ones
+function renderTermSlips() {
+  return slipBox({
+    icon: '🧾', title: 'สลิปเทอม 2', note: '', all: STATE.payments, openKey: 'termOpen', defaultOpen: true,
+    itemOf: p => { const e = STATE.expenses.find(x => x.id === p.eid); return { name: (e?.name || '').replace(/ ?[📚🛡️🎓].*$/, ''), amount: e?.amount }; },
+  });
+}
+// Slips for items removed at the term-2 reset: kept as records, not counted this term
+function renderOldSlips() {
+  return slipBox({
+    icon: '📁', title: 'สลิปเทอม 1 (รายการเก่า)', note: 'เก็บไว้เป็นหลักฐาน ไม่นับรวมยอดเทอมนี้', all: oldSlips(), openKey: 'oldOpen', defaultOpen: false,
+    itemOf: p => OLD_SEED[p.eid] || { name: 'รายการเก่า', amount: null }, approve: 'approveOldSlip',
+  });
 }
 async function approveOldSlip(id) {
   STATE.allPayments = (STATE.allPayments || []).map(p => p.id === id ? { ...p, status:'verified' } : p);
@@ -2559,14 +2630,17 @@ async function approveOldSlip(id) {
   showToast(error ? 'บันทึกไม่สำเร็จ ลองอีกครั้ง' : 'อนุมัติแล้ว ✅', error ? 'error' : 'success');
 }
 function renderAdmVerifyQueue() {
-  const pend = pendingPays();
+  const pendAll = pendingPays();
+  const pend = slipFilter(pendAll);
+  if (pendAll.length && !pend.length) return SLIP_NOT_FOUND;
   if (!pend.length) return `<div class="card" style="padding:50px 24px;text-align:center">
     <div style="display:inline-flex;align-items:center;justify-content:center;width:72px;height:72px;border-radius:50%;background:var(--primary-tint);font-size:34px;margin-bottom:14px">✅</div>
     <h2 class="h2">ตรวจสอบครบทุกรายการแล้ว!</h2>
     <p style="font-size:13px;color:var(--ink-3);margin-top:6px">ไม่มีคิวรอตรวจ</p>
   </div>`;
   const order = {fake:0, suspicious:1, likely_real:2};
-  const sorted = [...pend].sort((a,b) => (order[a.ai_verdict] ?? 3) - (order[b.ai_verdict] ?? 3));
+  // with the default sort, AI-flagged slips still come first (stable sort keeps newest-first within each group)
+  const sorted = (STATE.slipSort || 'new') === 'new' ? [...pend].sort((a,b) => (order[a.ai_verdict] ?? 3) - (order[b.ai_verdict] ?? 3)) : pend;
   const fakeCount = pend.filter(p => p.ai_verdict==='fake').length;
   const aiPassIds = pend.filter(p => p.ai_verdict==='likely_real').map(p => p.id);
 
@@ -2578,7 +2652,7 @@ function renderAdmVerifyQueue() {
 
   return `<div style="margin-bottom:14px">
     <div class="label-cap">คิวรอตรวจ</div>
-    <h1 class="h2" style="margin-top:3px">${pend.length} รายการรอ Admin ยืนยัน</h1>
+    <h1 class="h2" style="margin-top:3px">${pendAll.length} รายการรอ Admin ยืนยัน</h1>
   </div>
   ${!STATE.aiKey?`<div class="card" style="padding:13px 14px;margin-bottom:12px;background:var(--primary-tint);border-color:rgba(15,138,107,.28);display:flex;align-items:center;gap:10px">
     <span style="font-size:18px">✨</span>
@@ -2621,8 +2695,8 @@ function renderAdmVerifyQueue() {
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
           ${avatarHtml(u?.name, 38, 'mint')}
           <div style="flex:1;min-width:0">
-            <div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(u?.nick || stripPrefix(u?.name||''))}</div>
-            <div style="font-size:11px;color:var(--ink-3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(e?.name||'')} · ${fmtDateLong(p.paidAt)}</div>
+            <div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(u?.nick || stripPrefix(u?.name||''))}${u ? ` <span style="font-weight:500;color:var(--ink-3);font-size:11px">· เลขที่ ${userNo(u)}</span>` : ''}</div>
+            <div style="font-size:11px;color:var(--ink-3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(e?.name||'')} · ${slipWhen(p)}</div>
           </div>
           <div class="num-md" style="white-space:nowrap">${thb(e?.amount||0)}</div>
         </div>
@@ -3054,17 +3128,19 @@ function renderLeaderboardList() {
 }
 
 function renderDesktopAdmVerifyQueue() {
-  const pend = pendingPays();
+  const pendAll = pendingPays();
+  const pend = slipFilter(pendAll);
+  if (pendAll.length && !pend.length) return SLIP_NOT_FOUND;
   if (!pend.length) return `<div class="card" style="padding:80px 24px;text-align:center">
     <div style="display:inline-flex;align-items:center;justify-content:center;width:90px;height:90px;border-radius:50%;background:var(--primary-tint);font-size:42px;margin-bottom:16px">✅</div>
     <h2 class="h2">ตรวจสอบครบทุกรายการแล้ว!</h2>
     <p style="font-size:14px;color:var(--ink-3);margin-top:8px">ไม่มีคิวรอตรวจในขณะนี้</p>
   </div>`;
   const order = {fake:0, suspicious:1, likely_real:2};
-  const sorted = [...pend].sort((a,b)=>(order[a.ai_verdict]??3)-(order[b.ai_verdict]??3));
+  const sorted = (STATE.slipSort || 'new') === 'new' ? [...pend].sort((a,b)=>(order[a.ai_verdict]??3)-(order[b.ai_verdict]??3)) : pend;
   const fakeCount = pend.filter(p=>p.ai_verdict==='fake').length;
   const aiPassIds = pend.filter(p=>p.ai_verdict==='likely_real').map(p=>p.id);
-  const selId = STATE.selectedSlipId || sorted[0]?.id;
+  const selId = sorted.some(p => p.id === STATE.selectedSlipId) ? STATE.selectedSlipId : sorted[0]?.id;
   const sel = sorted.find(p=>p.id===selId) || sorted[0];
   const u = sel ? STATE.users.find(x=>x.id===sel.uid) : null;
   const e = sel ? STATE.expenses.find(x=>x.id===sel.eid) : null;
@@ -3109,8 +3185,8 @@ function renderDesktopAdmVerifyQueue() {
           return `<div class="slide-in" style="padding:10px 12px;border-radius:12px;cursor:pointer;display:flex;align-items:center;gap:10px;${isSel?'background:var(--primary-tint);border:1.5px solid var(--primary)':'border:1.5px solid transparent'};margin-bottom:4px;animation-delay:${Math.min(i*.025,.3)}s" onclick="setState({selectedSlipId:'${p.id}'})">
             ${avatarHtml(uu?.name, 36, isSel?'mint':'cream')}
             <div style="flex:1;min-width:0">
-              <div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(uu?.nick||stripPrefix(uu?.name||''))}</div>
-              <div style="font-size:11px;color:var(--ink-3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc((ee?.name||'').replace(/ ?[📚🛡️🎓].*$/,''))} · ${fmtDate(p.paidAt)}</div>
+              <div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(uu?.nick||stripPrefix(uu?.name||''))}${uu ? ` <span style="font-weight:500;color:var(--ink-3);font-size:11px">· เลขที่ ${userNo(uu)}</span>` : ''}</div>
+              <div style="font-size:11px;color:var(--ink-3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc((ee?.name||'').replace(/ ?[📚🛡️🎓].*$/,''))} · ${slipWhen(p)}</div>
             </div>
             ${vv?`<div style="width:22px;height:22px;border-radius:50%;background:${vv.fg};color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0">${vv.icon}</div>`:''}
           </div>`;
@@ -3122,7 +3198,7 @@ function renderDesktopAdmVerifyQueue() {
           ${avatarHtml(u?.name, 56, 'mint')}
           <div style="flex:1;min-width:0">
             <div style="font-weight:700;font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(u?.nick||stripPrefix(u?.name||''))}</div>
-            <div style="font-size:12px;color:var(--ink-3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(stripPrefix(u?.name||''))} · ${esc(e?.name||'')} · ${fmtDateLong(sel.paidAt)}</div>
+            <div style="font-size:12px;color:var(--ink-3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(stripPrefix(u?.name||''))}${u ? ` · เลขที่ ${userNo(u)}` : ''} · ${esc(e?.name||'')} · ${slipWhen(sel)}</div>
           </div>
           <div class="num" style="font-size:30px;font-weight:800;color:var(--primary-deep)">${thb(e?.amount||0)}</div>
         </div>
