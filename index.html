@@ -36,14 +36,22 @@
 }
 html,body{min-height:100%;font-family:'IBM Plex Sans Thai',sans-serif;color:var(--ink);background:var(--bg);overflow-x:hidden;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 body{
-  background:
-    radial-gradient(1200px 600px at 12% -10%,rgba(15,138,107,.10),transparent 60%),
-    radial-gradient(900px 500px at 95% 8%,rgba(245,182,56,.08),transparent 60%),
-    radial-gradient(900px 700px at 50% 110%,rgba(15,138,107,.06),transparent 60%),
-    linear-gradient(180deg,#FAF8F2 0%,#F6F2E6 60%,#FAF8F2 100%);
-  background-attachment:fixed;
+  background:linear-gradient(180deg,#FAF8F2 0%,#F6F2E6 60%,#FAF8F2 100%);
   min-height:100vh;
 }
+/* App-wide aurora: three soft blobs on one fixed layer behind every page. Only transform animates,
+   so it stays on the compositor and never repaints while scrolling. */
+.aurora{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.aurora i{position:absolute;width:360px;height:360px;border-radius:50%;filter:blur(60px);opacity:.5;animation:wlDrift 18s ease-in-out infinite alternate;will-change:transform}
+.aurora i:nth-child(1){left:-120px;top:-110px;background:radial-gradient(circle,#7FE0BE,transparent 70%)}
+.aurora i:nth-child(2){right:-140px;top:180px;background:radial-gradient(circle,#FFD98A,transparent 70%);animation-duration:22s;animation-delay:-6s}
+.aurora i:nth-child(3){left:10%;bottom:-180px;background:radial-gradient(circle,#A8E6CF,transparent 70%);animation-duration:26s;animation-delay:-12s}
+#app{position:relative;z-index:1}
+/* Page entrance: on each page change the page's blocks rise in one after another (set by staggerIn) */
+.stg-in{animation:fadeUp .5s cubic-bezier(.34,1.4,.64,1) both}
+/* One light sweep across green hero cards when a page opens */
+.hero-mint.shine-once::after{content:'';position:absolute;top:0;bottom:0;left:-45%;width:35%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.22),transparent);transform:skewX(-18deg);animation:wlShine 1.2s .45s ease-in-out both;pointer-events:none}
+@media (prefers-reduced-motion:reduce){ .aurora i,.stg-in,.hero-mint.shine-once::after{animation:none} }
 button{font-family:inherit;color:inherit;cursor:pointer;border:none;background:none}
 input,select,textarea{font-family:inherit;color:inherit}
 img{display:block;max-width:100%}
@@ -60,7 +68,7 @@ img{display:block;max-width:100%}
 .h3{font-size:16px;font-weight:600;letter-spacing:-.1px}
 
 /* === Cards & surfaces === */
-.card{background:#fff;border:1px solid var(--border);border-radius:18px;box-shadow:0 1px 2px rgba(15,46,42,.04),0 10px 28px -16px rgba(15,46,42,.10)}
+.card{background:rgba(255,255,255,.88);border:1px solid var(--border);border-radius:18px;box-shadow:0 1px 2px rgba(15,46,42,.04),0 10px 28px -16px rgba(15,46,42,.10)}
 .card-flat{background:var(--surface-2);border:1px solid var(--border);border-radius:14px}
 .hero-mint{background:linear-gradient(165deg,#0F8A6B 0%,#0A6B53 60%,#063D2F 100%);color:#fff;border-radius:26px;padding:22px;position:relative;overflow:hidden;box-shadow:0 16px 32px -16px rgba(10,107,83,.5)}
 .hero-mint::before{content:'';position:absolute;top:60px;right:-90px;width:240px;height:240px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#FFD56A,#F5B638 70%,rgba(214,154,31,.9));opacity:.55;pointer-events:none}
@@ -136,16 +144,40 @@ input::placeholder,textarea::placeholder{color:rgba(15,46,42,.32)}
 /* === Stat striped bar === */
 .bar{height:10px;border-radius:5px;background:rgba(15,46,42,.07);overflow:hidden;position:relative}
 .bar > .fill{position:absolute;left:0;top:0;height:100%;background:linear-gradient(90deg,#0A6B53,#0F8A6B);border-radius:5px;transition:width .8s cubic-bezier(.34,1.4,.64,1)}
-.bar > .pending{position:absolute;top:0;height:100%;background:repeating-linear-gradient(45deg,rgba(232,154,42,.45) 0 6px,rgba(232,154,42,.15) 6px 12px)}
+.bar > .pending{position:absolute;top:0;height:100%;overflow:hidden}
+/* "waiting" stripes march slowly; a wider stripe layer slides by one period (12px / cos45° ≈ 16.97px) on the compositor */
+.bar > .pending::before{content:'';position:absolute;top:0;bottom:0;left:-34px;right:0;background:repeating-linear-gradient(45deg,rgba(232,154,42,.45) 0 6px,rgba(232,154,42,.15) 6px 12px);animation:stripeMarch 1.4s linear infinite}
+@keyframes stripeMarch{to{transform:translateX(16.97px)}}
+/* Progress fills grow from 0 when a page opens (staggerIn adds .grow-run).
+   Realtime refreshes render them already full, so numbers updating never replays this. */
+.grow{overflow:hidden}
+.grow:not(.fill):not(.pending){position:relative}
+.grow-run{animation:barGrow 1.1s cubic-bezier(.22,1,.36,1) both;animation-delay:var(--gd,.3s)}
+@keyframes barGrow{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+/* A gloss keeps sweeping along every fill, all the time (transform only, so it stays on the compositor) */
+.grow:not(.pending)::after{content:'';position:absolute;top:0;bottom:0;left:0;width:40%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);transform:translateX(-100%);animation:barSheen 2.8s ease-in-out infinite;animation-delay:calc(var(--gd,.3s) + .9s)}
+@keyframes barSheen{0%{transform:translateX(-100%)}45%,100%{transform:translateX(260%)}}
+/* Gold goal bars: light diagonal stripes keep marching, like a "working on it" progress bar.
+   One stripe period is 14px across, i.e. 14 / cos45° ≈ 19.8px along the bar. */
+.grow.stripes::before{content:'';position:absolute;top:0;bottom:0;left:-40px;right:0;background:repeating-linear-gradient(45deg,rgba(255,255,255,.38) 0 7px,rgba(255,255,255,0) 7px 14px);animation:stripeGold 1s linear infinite}
+@keyframes stripeGold{to{transform:translateX(19.8px)}}
+@media (prefers-reduced-motion:reduce){ .bar > .pending::before,.grow-run,.grow::after,.grow.stripes::before{animation:none} }
 
 /* ============== MOBILE LAYOUT ============== */
 .m-shell{min-height:100vh;padding-bottom:90px;position:relative;z-index:1}
 .m-topbar{position:sticky;top:0;z-index:30;background:rgba(250,248,242,.92);backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;min-height:calc(54px + env(safe-area-inset-top));padding-top:calc(14px + env(safe-area-inset-top))}
 .m-main{padding:16px;max-width:540px;margin:0 auto}
 .m-bottom-nav{position:fixed;left:0;right:0;bottom:0;z-index:40;padding:10px 12px calc(20px + env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(250,248,242,0) 0%,rgba(250,248,242,.96) 40%,#FAF8F2 100%);pointer-events:none}
-.m-bottom-nav > .pill-bar{pointer-events:auto;background:#fff;border:1px solid var(--border);border-radius:28px;padding:8px;display:flex;gap:4px;box-shadow:0 16px 40px -8px rgba(15,46,42,.18),0 2px 6px rgba(15,46,42,.05)}
+.m-bottom-nav > .pill-bar{position:relative;pointer-events:auto;background:#fff;border:1px solid var(--border);border-radius:28px;padding:8px;display:flex;gap:4px;box-shadow:0 16px 40px -8px rgba(15,46,42,.18),0 2px 6px rgba(15,46,42,.05)}
 .m-bottom-nav button{flex:1;min-height:48px;padding:8px 10px;border-radius:22px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:10px;font-weight:600;color:var(--ink-3);transition:all .18s}
-.m-bottom-nav button.on{background:#1A2E2A;color:#fff;box-shadow:0 6px 16px rgba(15,46,42,.28)}
+.m-bottom-nav button{position:relative;z-index:1}
+.m-bottom-nav button.on{color:#fff}
+/* one dark pill slides between tabs (transform only), with an electric streak drawn on a canvas above it */
+.bn-ind{position:absolute;left:0;top:8px;bottom:8px;width:0;border-radius:22px;background:#1A2E2A;box-shadow:0 6px 16px rgba(15,46,42,.28);transition:transform .42s cubic-bezier(.3,1.25,.5,1),width .42s cubic-bezier(.3,1.25,.5,1);z-index:0}
+.bn-arc{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2}
+.bn-dot{position:absolute;top:7px;left:calc(50% + 7px);width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 2px #fff}
+.m-shell.no-nav{padding-bottom:30px}
+.m-shell.no-nav .m-bottom-nav{display:none}
 .m-bottom-nav button svg{width:20px;height:20px;display:block}
 .m-tab-bar{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:10px 16px;background:rgba(244,241,232,.66);border-bottom:1px solid var(--border)}
 .m-tab-bar::-webkit-scrollbar{display:none}
@@ -153,18 +185,125 @@ input::placeholder,textarea::placeholder{color:rgba(15,46,42,.32)}
 .m-tab-bar button.on{background:#1A2E2A;color:#fff;border-color:#1A2E2A}
 
 /* ============== DESKTOP LAYOUT ============== */
-.d-shell{min-height:100vh;display:flex;position:relative;z-index:1}
-.d-sidebar{width:240px;flex-shrink:0;border-right:1px solid var(--border);background:#fff;padding:22px 18px;display:flex;flex-direction:column;gap:14px;position:sticky;top:0;height:100vh}
-.d-brand{display:flex;align-items:center;gap:11px;padding:6px 4px 18px;border-bottom:1px solid var(--border);margin-bottom:4px}
-.d-brand-logo{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#0F8A6B,#0A6B53);display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;box-shadow:0 6px 16px rgba(15,138,107,.32)}
-.d-nav{flex:1;display:flex;flex-direction:column;gap:3px;overflow-y:auto}
-.d-nav button{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:11px;font-size:14px;font-weight:500;color:var(--ink-2);text-align:left;transition:all .15s}
-.d-nav button:hover{background:var(--surface-2);color:var(--ink)}
-.d-nav button.on{background:linear-gradient(135deg,#0F8A6B,#0A6B53);color:#fff;font-weight:600;box-shadow:0 6px 14px rgba(15,138,107,.28)}
-.d-nav button.on .d-nav-badge{background:rgba(255,255,255,.22);color:#fff}
-.d-nav-badge{margin-left:auto;background:var(--accent-tint);color:var(--accent-deep);padding:2px 8px;border-radius:8px;font-size:11px;font-weight:700}
-.d-user-card{background:var(--surface-2);border-radius:13px;padding:10px 12px;display:flex;align-items:center;gap:10px;margin-top:auto}
 .d-main{flex:1;display:flex;flex-direction:column;min-width:0}
+
+/* === Welcome screen: drifting aurora, staggered entrance, live wallet card with a goal ring === */
+.wl{position:relative;min-height:100vh;overflow:hidden;display:flex;justify-content:center;align-items:center;padding:max(20px,env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom))}
+@keyframes wlDrift{to{transform:translate(60px,40px) scale(1.15)}}
+.wl-col{position:relative;z-index:1;width:100%;max-width:440px;display:flex;flex-direction:column;gap:14px}
+.wl .fade-up:nth-child(2){animation-delay:.07s}.wl .fade-up:nth-child(3){animation-delay:.14s}.wl .fade-up:nth-child(4){animation-delay:.21s}
+.wl .fade-up:nth-child(5){animation-delay:.28s}.wl .fade-up:nth-child(6){animation-delay:.35s}.wl .fade-up:nth-child(7){animation-delay:.42s}
+.wl-top{display:flex;align-items:center;gap:11px}
+.wl-logo{width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,#0F8A6B,#0A6B53);display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 8px 18px -6px rgba(15,138,107,.55);flex-shrink:0}
+.wl-live{margin-left:auto;display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:600;color:var(--primary-deep);background:rgba(255,255,255,.7);border:1px solid rgba(15,138,107,.2);padding:5px 10px;border-radius:999px;backdrop-filter:blur(6px)}
+.wl-live i{width:7px;height:7px;border-radius:50%;background:var(--primary);animation:wlPing 1.6s ease-out infinite}
+@keyframes wlPing{0%{box-shadow:0 0 0 0 rgba(15,138,107,.5)}100%{box-shadow:0 0 0 8px rgba(15,138,107,0)}}
+.wl-h{font-size:34px;font-weight:700;line-height:1.12;letter-spacing:-.8px;margin-top:6px;text-wrap:balance}
+.wl-h span{background:linear-gradient(135deg,#0F8A6B,#0A6B53 60%,#D69A1F);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.wl-sub{font-size:13.5px;color:var(--ink-3);line-height:1.55;margin-top:-4px}
+.wl-card{padding:20px}
+.wl-card::before{top:auto;bottom:-170px;right:-130px;opacity:.22}
+.wl-card-row{display:flex;align-items:center;gap:14px}
+.wl-ring{width:88px;height:88px;flex-shrink:0;position:relative}
+.wl-ring svg{width:100%;height:100%;transform:rotate(-90deg);display:block}
+.wl-ring .trk{fill:none;stroke:rgba(255,255,255,.18);stroke-width:7}
+.wl-ring .bar{fill:none;stroke:#F5B638;stroke-width:7;stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:var(--off);animation:wlRing 1.3s .45s cubic-bezier(.3,1,.4,1) both;filter:drop-shadow(0 0 6px rgba(245,182,56,.55))}
+@keyframes wlRing{from{stroke-dashoffset:100}}
+.wl-ring b{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:800;letter-spacing:-.5px;line-height:1}
+.wl-ring b small{font-family:'IBM Plex Sans Thai',sans-serif;font-size:9.5px;font-weight:600;opacity:.8;margin-top:3px;letter-spacing:0}
+.wl-meta{display:flex;justify-content:space-between;gap:10px;font-size:12px;opacity:.9;margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.16)}
+.wl-avs{display:flex;align-items:center;gap:10px;margin-top:12px;font-size:12px;opacity:.95}
+.wl-avs > span{display:inline-flex}
+.wl-avs em{width:26px;height:26px;border-radius:50%;border:2.5px solid #0A6B53;margin-left:-8px;display:inline-flex;align-items:center;justify-content:center;font-style:normal;font-size:11px;font-weight:700}
+.wl-avs em:first-child{margin-left:0}
+.wl-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.wl-stat{background:rgba(255,255,255,.82);border:1px solid var(--border);border-radius:16px;padding:11px 12px;backdrop-filter:blur(6px)}
+.wl-stat b{display:block;font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:800;letter-spacing:-.4px;color:var(--ink)}
+.wl-stat b small{font-size:12px;font-weight:600;color:var(--ink-3)}
+.wl-stat span{display:block;font-size:11px;color:var(--ink-3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wl-cta{position:relative;overflow:hidden;width:100%;padding:16px;border-radius:16px;background:linear-gradient(135deg,#1A2E2A,#0A3B30);color:#fff;font-weight:700;font-size:16px;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 14px 30px -12px rgba(15,46,42,.55);transition:transform .15s}
+.wl-cta:active{transform:scale(.98)}
+.wl-cta::after{content:"";position:absolute;top:0;bottom:0;left:-40%;width:35%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.28),transparent);transform:skewX(-18deg);animation:wlShine 1.1s 1.3s ease-in-out both}
+@keyframes wlShine{from{left:-40%}to{left:120%}}
+.wl-foot{text-align:center;font-size:11px;color:var(--ink-3)}
+@media (prefers-reduced-motion:reduce){ .wl-live i,.wl-ring .bar,.wl-cta::after{animation:none} }
+
+/* === Desktop side nav: click the white area to collapse / expand (remembered) === */
+.sx-shell{--sx-w:240px;display:flex;min-height:100vh;position:relative;z-index:1}
+.sx-shell.mini{--sx-w:76px}
+.sx-main{flex:1;min-width:0;display:flex;flex-direction:column}
+.sx-fixed{left:var(--sx-w,0px) !important}
+.sx{position:sticky;top:0;height:100vh;flex-shrink:0;z-index:50;width:var(--sx-w);background:#fff;border-right:1px solid var(--border);cursor:pointer;transition:width .38s cubic-bezier(.3,1.15,.5,1),box-shadow .3s}
+.sx-in{height:100%;overflow:hidden;display:flex;flex-direction:column;gap:6px;padding:18px 14px}
+.sx-brand{display:flex;align-items:center;gap:11px;padding:2px 0 14px;border-bottom:1px solid var(--border);margin-bottom:4px;white-space:nowrap}
+.sx-logo{width:44px;height:44px;border-radius:13px;background:linear-gradient(135deg,#0F8A6B,#0A6B53);display:flex;align-items:center;justify-content:center;font-size:21px;flex-shrink:0;box-shadow:0 6px 16px rgba(15,138,107,.32)}
+.sx-fade{transition:opacity .22s}
+.sx.mini .sx-fade{opacity:0;pointer-events:none}
+.sx-lbl{font-size:10.5px;font-weight:600;letter-spacing:.6px;color:var(--ink-3);padding:8px 0 2px 4px;white-space:nowrap}
+.sx.mini .sx-lbl{padding-left:0;text-align:center;width:44px}
+.sx-nav{position:relative;display:flex;flex-direction:column;gap:2px;flex:1;min-height:0}
+.sx-glow{position:absolute;left:-14px;right:0;top:0;height:44px;border-radius:0 12px 12px 0;pointer-events:none;background:linear-gradient(90deg,rgba(15,138,107,.16),rgba(15,138,107,.05) 55%,rgba(15,138,107,0));transition:transform .42s cubic-bezier(.3,1.15,.5,1)}
+.sx-glow::before{content:"";position:absolute;left:0;top:9px;bottom:9px;width:3.5px;border-radius:0 4px 4px 0;background:var(--primary);box-shadow:0 0 10px 2px rgba(95,221,181,.85),0 0 22px 6px rgba(95,221,181,.35)}
+.sx-arc{position:absolute;left:-14px;top:0;width:18px;height:100%;pointer-events:none;z-index:2}
+.sx-item{position:relative;display:flex;align-items:center;gap:13px;height:44px;padding:0 12px;border-radius:12px;color:var(--ink-3);font-size:14px;font-weight:500;white-space:nowrap;text-align:left;transition:color .2s,background .15s}
+.sx-item:hover{background:rgba(26,46,42,.04);color:var(--ink-2)}
+.sx-item.on{color:var(--primary-ink);font-weight:700}
+.sx-item.on > span:first-child{color:var(--primary)}
+.sx-badge{margin-left:auto;min-width:22px;height:20px;padding:0 7px;border-radius:999px;background:var(--accent);color:#3B2604;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;transition:all .3s}
+.sx.mini .sx-badge{position:absolute;left:29px;top:9px;min-width:9px;width:9px;height:9px;padding:0;font-size:0;box-shadow:0 0 0 2px #fff}
+.sx.mini .sx-item[data-tip]:hover::after{content:attr(data-tip);position:absolute;left:54px;top:50%;transform:translateY(-50%);background:var(--ink);color:#fff;font-size:12px;font-weight:600;padding:5px 9px;border-radius:8px;white-space:nowrap;pointer-events:none;z-index:9}
+.sx-cta{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:14px;background:var(--accent-tint);border:1px solid rgba(245,182,56,.4);white-space:nowrap;text-align:left;position:relative}
+.sx-cta-ic{width:24px;height:24px;border-radius:8px;background:var(--accent);color:#3B2604;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sx-cta b{display:block;font-size:13px;color:var(--accent-deep)}
+.sx-cta small{display:block;font-size:11px;color:var(--accent-deep);opacity:.8}
+.sx.mini .sx-cta{padding:10px;justify-content:center}
+.sx.mini .sx-cta .sx-fade{position:absolute;left:46px}
+.sx.mini .sx-cta::after{content:"";position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:var(--danger);box-shadow:0 0 0 2px var(--accent-tint)}
+.sx-me{display:flex;align-items:center;gap:10px;padding:8px 2px 0;border-top:1px solid var(--border);margin-top:6px;white-space:nowrap}
+.sx-me b{display:block;font-size:13px}
+.sx-me small{display:block;font-size:11px;color:var(--ink-3)}
+.sx-out{margin-left:auto;width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--danger)}
+
+/* === Send button: shrinks to a puck and scans until the database actually answers === */
+.glance{position:relative;height:64px;display:flex;align-items:center;justify-content:center}
+.glance__aura{position:absolute;left:50%;top:50%;width:150px;height:150px;margin:-75px 0 0 -75px;border-radius:50%;background:radial-gradient(circle,rgba(95,221,181,.55),rgba(95,221,181,0) 65%);opacity:0;transform:scale(.6);transition:opacity .4s,transform .6s;pointer-events:none}
+.glance[data-state="scan"] .glance__aura{opacity:1;transform:scale(1);animation:glanceAura 1.1s ease-in-out infinite}
+.glance[data-verdict="fail"] .glance__aura{background:radial-gradient(circle,rgba(217,75,83,.35),rgba(217,75,83,0) 65%)}
+@keyframes glanceAura{50%{transform:scale(1.12);opacity:.7}}
+.glance__btn{--w:100%;position:relative;width:var(--w);height:54px;border-radius:999px;overflow:hidden;background:linear-gradient(135deg,#0F8A6B,#0A6B53);color:#fff;font-weight:700;font-size:15px;box-shadow:0 10px 24px -8px rgba(15,138,107,.55);transition:width .5s cubic-bezier(.5,0,.2,1),height .5s cubic-bezier(.5,0,.2,1),background .35s,box-shadow .35s}
+.glance__btn:disabled{opacity:.4;pointer-events:none}
+.glance[data-state="scan"] .glance__btn{--w:64px;height:64px;pointer-events:none}
+.glance[data-state="open"] .glance__btn{--w:min(100%,300px);transition:width .6s cubic-bezier(.3,1.35,.5,1),height .5s,background .35s}
+.glance[data-verdict="fail"] .glance__btn{background:linear-gradient(135deg,#D94B53,#B7373F);box-shadow:0 10px 24px -8px rgba(217,75,83,.5)}
+.glance__word,.glance__icon,.glance__res{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .25s,transform .35s;white-space:nowrap}
+.glance__icon{opacity:0;transform:scale(.6)}
+.glance__res{opacity:0;transform:translateY(8px);font-size:14px}
+.glance[data-state="scan"] .glance__word{opacity:0;transform:scale(.8)}
+.glance[data-state="scan"] .glance__icon{opacity:1;transform:none}
+.glance[data-state="open"] .glance__word{opacity:0}
+.glance[data-state="open"] .glance__res{opacity:1;transform:none}
+.glance__beam{position:absolute;left:-10%;right:-10%;top:50%;height:3px;margin-top:-1.5px;border-radius:3px;background:linear-gradient(90deg,transparent,#DFFFF3 30%,#fff 50%,#DFFFF3 70%,transparent);box-shadow:0 0 12px 3px rgba(95,221,181,.9);opacity:0}
+.glance[data-state="scan"] .glance__beam{animation:glanceBeam 1.1s cubic-bezier(.45,0,.55,1) infinite}
+@keyframes glanceBeam{0%{transform:translateY(-34px);opacity:0}12%{opacity:1}71%{transform:translateY(34px);opacity:1}78%,100%{transform:translateY(34px);opacity:0}}
+
+/* === Slip ring: wave while the slip is shrunk on the phone, check when ready === */
+.tide{display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 0}
+.tide svg{width:96px;height:96px;overflow:visible;display:block}
+.tide__fill{fill:var(--primary);transition:fill .32s}
+.tide[data-state="fail"] .tide__fill{fill:var(--danger)}
+.tide__track{fill:none;stroke:rgba(255,255,255,.22);stroke-width:3.4}
+.tide__arc{fill:none;stroke:#fff;stroke-width:3.4;stroke-linecap:round;transition:stroke-dashoffset .4s ease,opacity .3s}
+.tide[data-state="up"] .tide__spin{animation:tideSpin 1s linear infinite}
+@keyframes tideSpin{to{transform:rotate(360deg)}}
+.tide__glyph{fill:none;stroke:#fff;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}
+.tide__lbl{font-size:14px;font-weight:700;color:var(--ink-2)}
+.tide[data-state="done"] .tide__lbl{color:var(--primary-deep)}
+.tide[data-state="fail"] .tide__lbl{color:var(--danger)}
+.tide__sub{font-size:12px;color:var(--ink-3);min-height:18px;text-align:center}
+@media (prefers-reduced-motion:reduce){
+  .sx,.sx-glow,.sx-fade,.glance__btn,.bn-ind{transition:none}
+  .glance[data-state="scan"] .glance__beam,.glance[data-state="scan"] .glance__aura,.tide[data-state="up"] .tide__spin{animation:none}
+}
 .d-topbar{padding:18px 32px;border-bottom:1px solid var(--border);background:rgba(250,248,242,.86);backdrop-filter:blur(14px);display:flex;align-items:center;justify-content:space-between;gap:16px;position:sticky;top:0;z-index:20}
 .d-topbar h1{font-size:22px;font-weight:700;letter-spacing:-.3px}
 .d-content{flex:1;padding:28px 32px 60px;max-width:1280px;width:100%;margin:0 auto}
@@ -175,9 +314,44 @@ input::placeholder,textarea::placeholder{color:rgba(15,46,42,.32)}
 .numpad button:active{transform:scale(.94);background:var(--surface-2)}
 .numpad button.act{background:linear-gradient(135deg,#0F8A6B,#0A6B53);color:#fff;box-shadow:0 6px 16px rgba(15,138,107,.32)}
 .numpad button.back{background:transparent;border-color:transparent;color:var(--ink-3);font-size:18px}
-.pin-dots{display:flex;gap:14px;justify-content:center;margin:8px 0 26px}
-.pin-dots > div{width:18px;height:18px;border-radius:50%;background:transparent;border:2px solid var(--border-strong);transition:all .2s}
-.pin-dots > div.f{background:var(--primary);border-color:var(--primary);transform:scale(1.1);box-shadow:0 0 0 4px rgba(15,138,107,.18)}
+/* === Student PIN: 5 boxes in one row; on the 5th digit they converge into the centre, which becomes the verdict === */
+.pinrow{position:relative;height:92px;display:flex;align-items:center;justify-content:center;gap:10px;margin:4px auto 0}
+.pinrow__hub{position:absolute;left:50%;top:50%;width:0;height:0;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;color:#fff;overflow:hidden;opacity:0;transition:all .45s cubic-bezier(.34,1.56,.64,1)}
+.pinrow__hub svg{width:34px;height:34px;opacity:0;transform:scale(.4);transition:all .35s .15s}
+.pinrow.spin .pinrow__hub{width:14px;height:14px;margin:-7px 0 0 -7px;opacity:1;animation:hubPulse .9s ease-in-out infinite}
+.pinrow.ok .pinrow__hub{width:78px;height:78px;margin:-39px 0 0 -39px;opacity:1;animation:none;box-shadow:0 14px 30px -8px rgba(15,138,107,.6)}
+.pinrow.ok .pinrow__hub svg{opacity:1;transform:none}
+@keyframes hubPulse{0%,100%{box-shadow:0 0 0 6px rgba(15,138,107,.2)}50%{box-shadow:0 0 0 14px rgba(15,138,107,.06)}}
+.slot{position:relative;width:52px;height:62px;flex-shrink:0;border-radius:14px;background:#fff;border:1.5px solid var(--border-strong);box-shadow:0 1px 0 rgba(255,255,255,.9) inset,0 8px 18px -10px rgba(15,46,42,.35);
+  display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:700;color:var(--ink);
+  transition:border-color .2s,background .2s,color .2s}
+.slot span{display:block;line-height:1}
+.slot .empty{width:6px;height:6px;border-radius:50%;background:var(--ink-4)}
+.slot.cur{border-color:var(--primary);box-shadow:0 8px 18px -10px rgba(15,46,42,.35),0 0 0 4px rgba(15,138,107,.16)}
+.slot.cur .empty{width:2px;height:24px;border-radius:1px;background:var(--primary);animation:caret 1s steps(1) infinite}
+.slot.f{border-color:rgba(15,138,107,.55)}
+.slot.f span{animation:slotPop .28s cubic-bezier(.34,1.56,.64,1)}
+.pinrow.bad .slot{border-color:var(--danger);color:var(--danger);background:var(--danger-tint)}
+.pinrow.shake{animation:rowShake .42s}
+@keyframes caret{50%{opacity:0}}
+@keyframes slotPop{from{transform:scale(.4);opacity:0}}
+@keyframes rowShake{20%{translate:-9px 0}40%{translate:8px 0}60%{translate:-5px 0}80%{translate:3px 0}}
+/* short phones (iPhone SE ~667px): tighten spacing and keypad so the whole PIN screen fits without scrolling */
+@media (max-height:760px){
+  .pinrow{height:80px}
+  .slot{width:48px;height:56px;font-size:21px;border-radius:12px}
+  .pin-screen .pin-top{margin-bottom:8px!important}
+  .pin-screen .pin-who{padding:9px 14px!important;margin-bottom:8px!important}
+  .pin-screen .pin-forgot{margin-bottom:10px!important}
+  .pin-screen .numpad{gap:8px}
+  .pin-screen .numpad button{min-height:50px;padding:12px 0}
+}
+@media (max-height:700px){ .pin-screen .pin-sub{display:none} }
+.pin-status{text-align:center;font-size:13px;min-height:20px;margin:6px 0 4px;color:var(--ink-3)}
+.pin-status.bad{color:var(--danger);font-weight:600}
+.pin-status.ok{color:var(--primary-deep);font-weight:600}
+.numpad.busy{opacity:.45;pointer-events:none}
+@media (prefers-reduced-motion:reduce){ .slot.cur .empty,.slot.f span,.pinrow.shake,.pinrow.spin .pinrow__hub{animation:none} }
 
 /* === Step indicator === */
 .steps{display:flex;align-items:center;gap:6px}
@@ -199,6 +373,7 @@ input::placeholder,textarea::placeholder{color:rgba(15,46,42,.32)}
 </style>
 </head>
 <body>
+<div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
 <div id="app"></div>
 <div id="overlay"></div>
 
@@ -212,7 +387,7 @@ input::placeholder,textarea::placeholder{color:rgba(15,46,42,.32)}
 const SUPABASE_URL = 'https://jqzptcqrmzqsifhitzxi.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxenB0Y3FybXpxc2lmaGl0enhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5NTY4NzksImV4cCI6MjA5NDUzMjg3OX0.BI7Izly2-2PymjTfiT7wyAsAv75sDUb9cvdmIZuhZMM';
 const ADMIN_PASS   = 'TtKk0814414064';
-const INIT_BALANCE = 7262;
+const INIT_BALANCE = 2108;   // money in the fund when term 2/2569 started
 const CLAUDE_MODEL = 'claude-sonnet-4-5';
 const CLASS_NAME   = 'ม.6/9 · ระยอง';
 const ADMIN_NAME   = 'ตาต้า';
@@ -259,10 +434,38 @@ const SEED_USERS = [
   {id:'u37', name:'นางสาวสุนทรา ทองเรือง',        nick:'ฟ้าใส',    pin:'43592'},
 ];
 const SEED_EXP = [
-  {id:'e1', name:'เก็บเงินเทอม 1/2569 📚',  amount:150, desc:'ค่าบำรุงห้องเรียน ภาคเรียนที่ 1 ปีการศึกษา 2569', at:Date.now()},
-  {id:'e2', name:'ค่าประกันอุบัติเหตุ 🛡️',  amount:400, desc:'คุ้มครองทั้งปีการศึกษา 2569', at:Date.now()+864e5},
-  {id:'e3', name:'ค่าเข็มขัดนักเรียน 🎓',  amount:60,  desc:'เข็มขัดประจำห้อง', at:Date.now()+2*864e5},
+  {id:'t2-2569', name:'จ่ายเงินห้องรายเทอม เทอม 2 📚', amount:150, desc:'ค่าบำรุงห้องเรียน ภาคเรียนที่ 2 ปีการศึกษา 2569', at:Date.now()},
 ];
+
+// One-time switch to term 2/2569. Runs once, from whichever device first loads this version:
+// removes the old expense items and sets the carried-over balance to what the fund holds today.
+// Members, the QR code and every payment row (with its slip) stay in the database untouched;
+// payments for removed items are just hidden (see setPayments).
+const MIGRATION_KEY = 'migr_term2_2569';
+async function runMigrations(cfgs) {
+  if (cfgs.some(r => r.key === MIGRATION_KEY)) return;
+  try {
+    const keep = new Set(SEED_EXP.map(e => e.id));
+    for (const e of STATE.expenses.filter(e => !keep.has(e.id))) {
+      const { error } = await db.from('expenses').delete().eq('id', e.id);
+      if (error) throw error;
+    }
+    let r = await db.from('config').upsert({key:'savedBalance', value:String(INIT_BALANCE)});
+    if (r.error) throw r.error;
+    r = await db.from('config').upsert({key:MIGRATION_KEY, value:new Date().toISOString()});
+    if (r.error) throw r.error;
+    STATE.expenses = STATE.expenses.filter(e => keep.has(e.id));
+    STATE.savedBalance = INIT_BALANCE;
+  } catch (err) {
+    console.error('term-2 migration failed; will retry on next load', err);
+  }
+}
+
+// Only payments for items that still exist count anywhere in the app; the rest stay stored as records.
+function setPayments(rows) {
+  STATE.allPayments = rows;
+  STATE.payments = rows.filter(p => STATE.expenses.some(e => e.id === p.eid));
+}
 
 // ── Device detection (set once, no resize) ──
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 900;
@@ -280,7 +483,7 @@ let STATE = {
   loading: true,
   toast: null,
   // pay wizard
-  payStep: 1, paySelected: [], paySlip: null,
+  payStep: 1, paySelected: [], paySlip: null, paySlipInfo: '',
   // ui state
   lbMode: 'fast', editMbId: null, slipZoom: null,
   loginStage: 'welcome',   // welcome | choose | pin | admin
@@ -380,12 +583,13 @@ async function loadAll() {
         STATE.expenses = eRes.data;
       }
     }
-    STATE.payments = (pRes.data||[]).map(p => ({...p, paidAt: p.paid_at}));
     const cfgs = cRes.data || [];
     const qrRow = cfgs.find(r => r.key==='qr');
     const balRow = cfgs.find(r => r.key==='savedBalance');
     if (qrRow?.value) STATE.qr = qrRow.value;
     if (balRow?.value) STATE.savedBalance = +balRow.value;
+    await runMigrations(cfgs);
+    setPayments((pRes.data||[]).map(p => ({...p, paidAt: p.paid_at})));
     return true;
   } catch(err) {
     console.error('loadAll error', err);
@@ -397,12 +601,14 @@ function subscribeRealtime() {
   db.channel('class_fund')
     .on('postgres_changes', {event:'*', schema:'public', table:'payments'}, async () => {
       const {data} = await db.from('payments').select('*').order('paid_at');
-      STATE.payments = (data||[]).map(p=>({...p,paidAt:p.paid_at}));
+      setPayments((data||[]).map(p=>({...p,paidAt:p.paid_at})));
       render();
     })
     .on('postgres_changes', {event:'*', schema:'public', table:'expenses'}, async () => {
       const {data} = await db.from('expenses').select('*').order('at');
       STATE.expenses = data||[];
+      // re-filter from every payment we know of, including ones just sent from this device
+      setPayments([...new Map([...(STATE.allPayments||[]), ...STATE.payments].map(p => [p.id, p])).values()]);
       render();
     })
     .on('postgres_changes', {event:'*', schema:'public', table:'users'}, async () => {
@@ -637,11 +843,112 @@ function uploadQR(input) {
   };
   r.readAsDataURL(f);
 }
-function uploadSlip(input) {
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const fmtBytes = b => b >= 1048576 ? (b / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB';
+function readAsDataURL(f) {
+  return new Promise((res, rej) => { const r = new FileReader(); r.onload = ev => res(ev.target.result); r.onerror = rej; r.readAsDataURL(f); });
+}
+// Shrink a phone photo to 1280px on its long side as JPEG before it is stored (a 3–5 MB photo becomes ~150–300 KB)
+function compressImage(f) {
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(f);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const k = Math.min(1, 1280 / Math.max(img.naturalWidth, img.naturalHeight));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);   // PNG transparency → white, not black
+      ctx.drawImage(img, 0, 0, c.width, c.height);
+      const dataUrl = c.toDataURL('image/jpeg', 0.8);
+      res({ dataUrl, size: Math.round((dataUrl.length - dataUrl.indexOf(',') - 1) * 0.75) });
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('decode')); };
+    img.src = url;
+  });
+}
+
+// ── Slip ring: wave while compressing, morphs to a check (or red) when done ──
+// Every posture is the same 9 points, so each morph is one lerp
+const TIDE_ARROW = [...Array(9)].map((_, k) => k <= 4 ? [-14 + 3.5*k, -3 - 3.5*k] : [3.5*(k-4), -17 + 3.5*(k-4)]);
+const TIDE_CHECK = [...Array(9)].map((_, k) => k <= 4 ? [-18 + 3*k, 1 + 3*k] : [-6 + 6.25*(k-4), 13 - 6.25*(k-4)]);
+const tideWave = ph => [...Array(9)].map((_, k) => [-24 + 6*k, Math.sin(ph + k*.85) * 6]);
+let tideRaf = 0;
+function tideHtml() {
+  return `<div class="tide" id="tide" data-state="up">
+    <svg viewBox="-56 -56 112 112" aria-hidden="true">
+      <circle class="tide__fill" r="54"/>
+      <circle class="tide__track" r="46"/>
+      <g class="tide__spin"><circle class="tide__arc" id="tide-arc" r="46" pathLength="100" stroke-dasharray="100" stroke-dashoffset="72" transform="rotate(-90)"/></g>
+      <polyline class="tide__glyph" id="tide-glyph"/>
+    </svg>
+    <div class="tide__lbl" id="tide-lbl">กำลังย่อรูป</div>
+    <div class="tide__sub" id="tide-sub" aria-live="polite">ทำในเครื่อง ไม่ใช้เน็ต</div>
+  </div>`;
+}
+function tideRun() {
+  const cur = TIDE_ARROW.map(p => p.slice());
+  let last = 0, phase = 0;
+  cancelAnimationFrame(tideRaf);
+  (function frame(t) {
+    const el = document.getElementById('tide'), g = document.getElementById('tide-glyph');
+    if (!el || !g) return;
+    const dt = Math.min(.05, (t - (last || t)) / 1000); last = t;
+    const st = el.dataset.state;
+    phase += dt * 7;
+    const target = st === 'done' ? TIDE_CHECK : st === 'fail' ? TIDE_ARROW : tideWave(phase);
+    const k = reduceMotion() ? 1 : 1 - Math.exp(-dt * 16);
+    let moving = st === 'up';
+    cur.forEach((p, i) => { const dx = target[i][0]-p[0], dy = target[i][1]-p[1]; p[0] += dx*k; p[1] += dy*k; if (Math.abs(dx)+Math.abs(dy) > .05) moving = true; });
+    g.setAttribute('points', cur.map(p => p[0].toFixed(2) + ',' + p[1].toFixed(2)).join(' '));
+    if (moving) tideRaf = requestAnimationFrame(frame);
+  })(performance.now());
+}
+function tideSet(state, lbl, sub) {
+  const el = document.getElementById('tide');
+  if (!el) return;
+  el.dataset.state = state;
+  document.getElementById('tide-lbl').textContent = lbl;
+  document.getElementById('tide-sub').textContent = sub;
+  if (state === 'done') document.getElementById('tide-arc')?.setAttribute('stroke-dashoffset', '0');
+  if (state === 'fail') document.getElementById('tide-arc')?.setAttribute('stroke-dashoffset', '100');
+  tideRun();
+}
+async function uploadSlip(input) {
   const f = input.files[0]; if (!f) return;
-  const r = new FileReader();
-  r.onload = ev => { STATE.paySlip = ev.target.result; render(); };
-  r.readAsDataURL(f);
+  input.value = '';
+  const zone = document.getElementById('slip-zone');
+  if (zone) {
+    zone.innerHTML = tideHtml(); tideRun();
+    zone.scrollIntoView({ block: 'center', behavior: reduceMotion() ? 'auto' : 'smooth' });   // keep the ring clear of the fixed send bar
+  }
+  UI_LOCK = true;
+  const t0 = performance.now();
+  let dataUrl = null, info = '';
+  if (f.type.startsWith('image/')) {
+    try {
+      const out = await compressImage(f);
+      if (out.size < f.size) { dataUrl = out.dataUrl; info = `${fmtBytes(f.size)} → ${fmtBytes(out.size)}`; }
+      else dataUrl = await readAsDataURL(f);   // already small: keep the original
+    } catch {
+      try { dataUrl = await readAsDataURL(f); } catch {}   // e.g. a format this browser can't draw: send as-is
+    }
+  }
+  const left = 700 - (performance.now() - t0);
+  if (left > 0) await sleep(left);
+  if (!dataUrl) {
+    tideSet('fail', 'ใช้ไฟล์นี้ไม่ได้', 'เลือกรูปสลิป (JPG หรือ PNG)');
+    showToast('ไฟล์นี้ไม่ใช่รูปภาพ','error');
+    await sleep(1400);
+    unlockUI(); render();
+    return;
+  }
+  tideSet('done', 'พร้อมส่ง', info ? `ย่อแล้ว ${info}` : 'แนบสลิปแล้ว');
+  await sleep(650);
+  STATE.paySlip = dataUrl;
+  STATE.paySlipInfo = info;
+  unlockUI(); render();
 }
 function togglePaySelect(eid) {
   const has = STATE.paySelected.includes(eid);
@@ -655,28 +962,53 @@ function selectAllUnpaid() {
   STATE.paySelected = unpaid.map(e=>e.id);
   render();
 }
+// Never cut a scan sweep in half: land the verdict at the end of the beam's current pass
+function endOfSweep(g) {
+  const beam = g?.querySelector('.glance__beam');
+  if (!beam || reduceMotion()) return Promise.resolve();
+  return new Promise(r => { beam.addEventListener('animationiteration', r, { once: true }); setTimeout(r, 1200); });
+}
 async function submitPay() {
   const uid = STATE.session?.uid;
-  if (!uid || !STATE.paySelected.length || !STATE.paySlip) return;
-  const slip = STATE.paySlip;
-  const ids = STATE.paySelected;
-  // Insert one payment row per selected expense
-  const rows = ids.map((eid, i) => ({
-    id: 'p'+Date.now()+'_'+i,
-    uid,
-    eid,
-    status: 'pending',
-    paidAt: Date.now(),
-    paid_at: Date.now(),
-    slip,
+  if (UI_LOCK || !uid || !STATE.paySelected.length || !STATE.paySlip) return;
+  UI_LOCK = true;
+  const g = document.getElementById('glance');
+  if (g) { g.dataset.verdict = ''; g.dataset.state = 'scan'; }
+  const now = Date.now();
+  const rows = STATE.paySelected.map((eid, i) => ({
+    id: 'p'+now+'_'+i, uid, eid, status: 'pending', paid_at: now, slip: STATE.paySlip,
   }));
-  STATE.payments = [...STATE.payments, ...rows];
+  const t0 = performance.now();
+  let ok = true;
+  // Only say "sent" once the database has actually stored the rows
+  try {
+    const { error } = await db.from('payments').insert(rows);
+    if (error) throw error;
+  } catch (err) {
+    console.error('submitPay failed', err);
+    ok = false;
+  }
+  const left = 1000 - (performance.now() - t0);   // at least one full sweep, even on fast wifi
+  if (left > 0) await sleep(left);
+  await endOfSweep(g);
+  const res = document.getElementById('glance-res');
+  if (g && res) {
+    res.innerHTML = ok
+      ? `${svgIcon('check',18)} ส่งแล้ว · รอ Admin ตรวจ`
+      : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg> ส่งไม่สำเร็จ · แตะลองใหม่`;
+    g.dataset.verdict = ok ? 'pass' : 'fail';
+    g.dataset.state = 'open';
+  }
+  if (!ok) {
+    UI_LOCK = false;   // keep the red button on screen; tapping it retries with the same slip
+    return;
+  }
+  STATE.payments = [...STATE.payments.filter(p => !rows.some(r => r.id === p.id)), ...rows.map(r => ({...r, paidAt: r.paid_at}))];
+  await sleep(reduceMotion() ? 0 : 750);
   STATE.payStep = 3;
+  RENDER_PENDING = false;
+  UI_LOCK = false;
   render();
-  await db.from('payments').insert(rows.map(r => ({
-    id: r.id, uid: r.uid, eid: r.eid, status: r.status,
-    paid_at: r.paid_at, slip: r.slip,
-  })));
 }
 async function updateBal() {
   const v = +document.getElementById('bal-inp')?.value;
@@ -717,42 +1049,138 @@ function pwBack() {
 }
 
 // ── PIN numpad (use direct DOM update to avoid re-rendering whole screen, fixes name-card bouncing) ──
+const PIN_LEN = 5;
+const PIN_HINT = 'แตะตัวเลข หรือพิมพ์ / วางรหัสได้เลย';
+// Anticipation then brake: slots pull back slightly before spiralling into the hub
+const WIND_UP_BRAKE = 'cubic-bezier(.6,-0.35,.2,1)';
+let pinBusy = false;
+let pinAnims = [];
+const reduceMotion = () => window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
 function pinPress(d) {
-  if (STATE.pinBuf.length >= 5) return;
+  if (pinBusy || STATE.pinBuf.length >= PIN_LEN) return;
   STATE.pinBuf += String(d);
+  const i = STATE.pinBuf.length - 1;
   updatePinDotsDOM();
-  if (STATE.pinBuf.length === 5) setTimeout(tryPinLogin, 180);
+  // Show the digit briefly, then mask it so nobody nearby can read the student ID
+  setTimeout(() => {
+    const s = document.querySelectorAll('.pinrow .slot')[i];
+    const span = s && s.querySelector('span');
+    if (span && STATE.pinBuf.length > i) span.textContent = '•';
+  }, 550);
+  if (STATE.pinBuf.length === PIN_LEN) setTimeout(tryPinLogin, 200);
 }
 function pinBack() {
-  if (!STATE.pinBuf) return;
+  if (pinBusy || !STATE.pinBuf) return;
   STATE.pinBuf = STATE.pinBuf.slice(0,-1);
   updatePinDotsDOM();
 }
 function pinClear() {
+  if (pinBusy) return;
   STATE.pinBuf = '';
   updatePinDotsDOM();
 }
+function pinSlotHtml(i, len, busy) {
+  const filled = i < len;
+  const cls = 'slot' + (filled ? ' f' : '') + (!busy && i === len ? ' cur' : '');
+  return `<div class="${cls}">${filled ? '<span>•</span>' : '<div class="empty"></div>'}</div>`;
+}
 function updatePinDotsDOM() {
-  document.querySelectorAll('.pin-dots > div').forEach((dot, i) => {
-    if (i < STATE.pinBuf.length) dot.classList.add('f');
-    else dot.classList.remove('f');
+  const len = STATE.pinBuf.length;
+  document.querySelectorAll('.pinrow .slot').forEach((s, i) => {
+    const filled = i < len;
+    s.classList.toggle('f', filled);
+    s.classList.toggle('cur', !pinBusy && i === len);
+    if (filled && i === len - 1 && !s.querySelector('span')) s.innerHTML = `<span>${esc(STATE.pinBuf[i])}</span>`;
+    else if (!filled && !s.querySelector('.empty')) s.innerHTML = '<div class="empty"></div>';
   });
+}
+function setPinStatus(text, cls) {
+  const el = document.getElementById('pin-status');
+  if (el) { el.textContent = text; el.className = 'pin-status' + (cls ? ' ' + cls : ''); }
+}
+function setPinBusy(v) {
+  pinBusy = v;
+  document.querySelector('.numpad')?.classList.toggle('busy', v);
 }
 function tryPinLogin() {
   const u = STATE.users.find(x => x.id === STATE.pickedUid);
   if (!u) return;
-  if (u.pin && u.pin !== STATE.pinBuf) {
-    showToast('รหัสนักเรียนไม่ถูก','error');
-    STATE.pinBuf = '';
-    render();
-    return;
+  const ok = !u.pin || u.pin === STATE.pinBuf;
+  const row = document.querySelector('.pinrow');
+  const reduce = reduceMotion();
+  setPinBusy(true);
+  updatePinDotsDOM();
+  setPinStatus('กำลังตรวจสอบ…');
+  if (row) {
+    row.classList.add('spin');
+    const rc = row.getBoundingClientRect(), cx = rc.left + rc.width / 2;
+    const slots = [...row.querySelectorAll('.slot')];
+    const mid = (slots.length - 1) / 2;
+    // Each box winds up (a small pull outward), then spins into the centre hub; outer boxes start first
+    pinAnims = slots.map((s, i) => {
+      const r = s.getBoundingClientRect(), dx = cx - (r.left + r.width / 2), side = dx > 0 ? 1 : -1;
+      return s.animate([
+        { transform: 'translate(0,0) rotate(0deg) scale(1)', opacity: 1 },
+        { transform: `translate(${-dx * .1}px,-7px) rotate(${-8 * side}deg) scale(1.04)`, opacity: 1, offset: .25 },
+        { transform: `translate(${dx}px,0) rotate(${200 * side}deg) scale(.2)`, opacity: 0 }
+      ], { duration: reduce ? 1 : 760, delay: reduce ? 0 : (mid - Math.abs(i - mid)) * 50, easing: 'cubic-bezier(.6,0,.2,1)', fill: 'forwards' });
+    });
   }
-  localStorage.setItem('cf_uid', u.id);
-  STATE.session = {role:'user', uid:u.id};
-  STATE.rememberUid = u.id;
-  STATE.pinBuf = '';
-  navigate('#/u/home');
+  // Fixed timers rather than animation promises: a realtime re-render may replace these nodes mid-flight
+  setTimeout(() => ok ? pinSuccess(u) : pinFail(), reduce ? 50 : 1000);
 }
+function pinSuccess(u) {
+  const row = document.querySelector('.pinrow');
+  if (row) { row.classList.remove('spin'); row.classList.add('ok'); }
+  setPinStatus(`ยินดีต้อนรับ ${u.nick || stripPrefix(u.name)}`, 'ok');
+  setTimeout(() => {
+    pinAnims = [];
+    setPinBusy(false);
+    localStorage.setItem('cf_uid', u.id);
+    STATE.session = {role:'user', uid:u.id};
+    STATE.rememberUid = u.id;
+    STATE.pinBuf = '';
+    navigate('#/u/home');
+  }, reduceMotion() ? 200 : 650);
+}
+function pinFail() {
+  const row = document.querySelector('.pinrow');
+  const reduce = reduceMotion();
+  if (row) row.classList.remove('spin');
+  pinAnims.forEach(a => { a.playbackRate = 1.6; a.reverse(); });
+  setTimeout(() => {
+    pinAnims.forEach(a => a.cancel());
+    pinAnims = [];
+    const o = document.querySelector('.pinrow');
+    if (o) { o.classList.add('bad'); if (!reduce) o.classList.add('shake'); }
+    setPinStatus('รหัสไม่ถูก ลองอีกครั้ง', 'bad');
+    showToast('รหัสนักเรียนไม่ถูก','error');
+    setTimeout(() => {
+      document.querySelector('.pinrow')?.classList.remove('bad', 'shake');
+      STATE.pinBuf = '';
+      setPinBusy(false);
+      updatePinDotsDOM();
+      setPinStatus(PIN_HINT);
+    }, 900);
+  }, reduce ? 50 : 560);
+}
+// Desktop: type or paste the PIN while the student PIN screen is open
+document.addEventListener('keydown', e => {
+  if (STATE.session || STATE.loginStage !== 'pin' || e.target.closest?.('input,textarea')) return;
+  if (/^[0-9]$/.test(e.key)) pinPress(e.key);
+  else if (e.key === 'Backspace') pinBack();
+  else if (e.key === 'Escape') pinClear();
+});
+document.addEventListener('paste', e => {
+  if (STATE.session || STATE.loginStage !== 'pin' || pinBusy || e.target.closest?.('input,textarea')) return;
+  const t = (e.clipboardData?.getData('text') || '').replace(/\D/g, '').slice(0, PIN_LEN);
+  if (!t) return;
+  e.preventDefault();
+  STATE.pinBuf = '';
+  updatePinDotsDOM();
+  [...t].forEach((d, i) => setTimeout(() => pinPress(d), i * 70));
+});
 function quickLogin() {
   const u = STATE.users.find(x => x.id === STATE.rememberUid);
   if (!u) return;
@@ -854,8 +1282,41 @@ function paintCountUps() {
 // ============================================================
 // === RENDER DISPATCHER ======================================
 // ============================================================
+// Page entrance: the visible page's blocks rise in one after another. Runs only when the page
+// changes (not on realtime refreshes), so live updates never make the screen jump.
+function staggerIn() {
+  if (reduceMotion()) return;
+  const root = document.querySelector('#app .m-main, #app .d-content, #app .pin-screen, #usr-list');
+  if (!root) return;
+  let box = root;
+  const kids = el => [...el.children].filter(c => c.tagName !== 'STYLE' && c.tagName !== 'SCRIPT');
+  for (let d = 0; d < 3 && kids(box).length === 1; d++) box = kids(box)[0];   // descend through single wrappers
+  kids(box).slice(0, 12).forEach((el, i) => {
+    el.classList.remove('stg-in'); void el.offsetWidth;
+    el.style.animationDelay = (i * 0.06) + 's';
+    el.classList.add('stg-in');
+  });
+  document.querySelectorAll('#app .hero-mint').forEach(h => h.classList.add('shine-once'));
+  // Progress bars fill in order; a "waiting" segment starts once its paid part has filled
+  let delay = 0.3;
+  document.querySelectorAll('#app .grow').forEach(el => {
+    const d = el.classList.contains('pending') ? delay + 0.55 : (delay += 0.08);
+    el.style.setProperty('--gd', d.toFixed(2) + 's');
+    el.classList.remove('grow-run'); void el.offsetWidth;
+    el.classList.add('grow-run');
+  });
+}
+
+// While a send/compress animation runs, a realtime update must not rebuild the page under it
+let UI_LOCK = false, RENDER_PENDING = false;
+function unlockUI() {
+  UI_LOCK = false;
+  if (RENDER_PENDING) { RENDER_PENDING = false; render(); }
+}
 function render() {
+  if (UI_LOCK) { RENDER_PENDING = true; return; }
   const app = document.getElementById('app');
+  STATE._shell = null;
   if (STATE.loading) {
     app.innerHTML = renderLoading();
     paintToast();
@@ -870,9 +1331,19 @@ function render() {
   } else {
     html = isMobile ? renderMobileUser() : renderDesktopUser();
   }
-  app.innerHTML = html;
+  const sh = STATE._shell;
+  const cur = document.getElementById('app-shell');
+  if (sh && cur && cur.dataset.key === sh.key) {
+    document.getElementById('app-main').innerHTML = sh.main;
+    sh.apply(true);
+  } else {
+    app.innerHTML = html;
+    if (sh) sh.apply(false);
+  }
   paintToast();
   paintCountUps();
+  const pageKey = [STATE.route, STATE.session?.role || '', STATE.session ? '' : STATE.loginStage, STATE.payStep].join('|');
+  if (pageKey !== STATE._pageKey) { STATE._pageKey = pageKey; staggerIn(); }
   // Auto-focus AI on admin verify when key exists
   if (STATE.session?.role==='admin' && STATE.route==='#/a/vr' && STATE.aiKey && !STATE.aiRunning) {
     setTimeout(runAiOnPending, 200);
@@ -900,48 +1371,54 @@ function renderLoginRoot() {
 }
 
 function renderWelcome() {
-  const avatars = ['#FFD8A8','#A8D8C2','#F2C9D0','#C9D0F2','#FFE8B0']
-    .map((c,i)=>`<span style="width:22px;height:22px;border-radius:50%;background:${c};border:2.5px solid #0A6B53;margin-left:${i>0?-7:0}px;display:inline-block"></span>`).join('');
-  return `<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:max(18px,env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));background:var(--bg)">
-    <div style="width:100%;max-width:420px;display:flex;flex-direction:column;gap:14px">
+  const got = totalVerified(), target = totalTarget();
+  const grand = STATE.savedBalance + got;
+  const pct = target ? Math.min(100, Math.round(got / target * 100)) : 0;
+  const nExp = STATE.expenses.length;
+  const fullyPaid = nExp ? STATE.users.filter(u => STATE.payments.filter(p => p.uid===u.id && p.status==='verified').length >= nExp).length : 0;
+  const pend = pendingPays().length;
+  const room = (CLASS_NAME.split('·')[0] || '').trim();
+  const avs = sortUsersById(STATE.users).slice(0, 5).map((u, i) => { const t = avTone(i); return `<em style="background:${t.bg};color:${t.fg}">${esc(initial(u.name))}</em>`; }).join('');
+  return `<div class="wl">
+    <div class="wl-col">
+      <header class="wl-top fade-up">
+        <div class="wl-logo" aria-hidden="true">🏦</div>
+        <div>
+          <div class="num" style="font-size:12px;font-weight:800;letter-spacing:2px;color:var(--primary-deep)">CLASS FUND</div>
+          <div style="font-size:11px;color:var(--ink-3);margin-top:1px">${esc(CLASS_NAME)}</div>
+        </div>
+        <span class="wl-live"><i></i>ยอดอัปเดตสด</span>
+      </header>
 
-      <!-- Hero mint card — fixed content, no stretching -->
-      <div class="hero-mint fade-up" style="padding:26px 22px 22px">
-        <!-- Brand -->
-        <div style="display:flex;align-items:center;gap:11px;margin-bottom:22px">
-          <div style="width:40px;height:40px;border-radius:12px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.28);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0">🏦</div>
-          <div>
-            <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;letter-spacing:2px">CLASS FUND</div>
-            <div style="font-size:11px;opacity:.78;margin-top:1px">${esc(CLASS_NAME)}</div>
-          </div>
-        </div>
-        <!-- Headline -->
-        <h1 style="font-size:26px;font-weight:700;line-height:1.22;letter-spacing:-.4px;margin-bottom:8px">
-          ระบบเก็บเงินห้อง<br>ผ่าน <span style="color:#F5B638">Web apps 2.0</span>
-        </h1>
-        <p style="font-size:13px;opacity:.82;line-height:1.55;margin-bottom:20px;max-width:280px">จ่ายผ่านพร้อมเพย์ · แนบสลิป · ทุกคนเห็นยอดเงินจริง</p>
-        <!-- Balance glass row -->
-        <div class="glass-row" style="padding:14px 16px;margin-bottom:16px">
-          <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;opacity:.85;margin-bottom:4px">
-            <span>ยอดสะสมห้องเรา</span>
-            <span class="pill pill-ghost" style="font-size:10px">ยกมา ปี 68</span>
-          </div>
-          <div class="num-hero">
-            <span style="font-size:22px;font-weight:500;margin-right:3px;opacity:.85">฿</span>${cnum(STATE.savedBalance,'welcome-saved')}
-          </div>
-          <div style="display:flex;align-items:center;gap:10px;margin-top:11px;padding-top:10px;border-top:1px solid rgba(255,255,255,.16)">
-            <div style="display:inline-flex">${avatars}</div>
-            <span style="font-size:12px;opacity:.92"><b class="num">${STATE.users.length}</b> คนรวมเงินกัน</span>
-          </div>
-        </div>
-        <!-- CTA -->
-        <button class="btn" style="width:100%;padding:14px;background:#fff;color:var(--ink);font-weight:700;font-size:15px;border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,.16)" onclick="setState({loginStage:'pickRole'})">
-          เข้าสู่ระบบ ${svgIcon('fwd',16)}
-        </button>
+      <div class="fade-up">
+        <h1 class="wl-h">กระเป๋าเงินห้อง <span>${esc(room)}</span></h1>
+        <p class="wl-sub" style="margin-top:8px">จ่ายผ่านพร้อมเพย์ · แนบสลิป · ทุกคนเห็นยอดเดียวกัน</p>
       </div>
 
-      <!-- Footer -->
-      <div style="text-align:center;font-size:11px;color:var(--ink-3)">
+      <section class="hero-mint wl-card fade-up">
+        <div class="wl-card-row">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12px;opacity:.85">ในกระเป๋าห้องตอนนี้</div>
+            <div class="num-hero" style="margin-top:6px"><span style="font-size:22px;font-weight:500;margin-right:3px;opacity:.85">฿</span>${cnum(grand,'welcome-grand')}</div>
+          </div>
+          <div class="wl-ring" role="img" aria-label="เก็บได้ ${pct}% ของเป้าเทอมนี้">
+            <svg viewBox="0 0 80 80"><circle class="trk" cx="40" cy="40" r="34"/><circle class="bar" cx="40" cy="40" r="34" pathLength="100" style="--off:${100 - pct}"/></svg>
+            <b>${pct}%<small>ของเป้า</small></b>
+          </div>
+        </div>
+        <div class="wl-meta"><span>เก็บเทอมนี้ <b class="num">${thb(got)}</b> / ${thb(target)}</span><span>ยกมา ${thb(STATE.savedBalance)}</span></div>
+        <div class="wl-avs"><span>${avs}</span><span><b class="num" style="margin-right:4px">${STATE.users.length}</b>คนรวมเงินกัน</span></div>
+      </section>
+
+      <div class="wl-stats fade-up">
+        <div class="wl-stat"><b>${fullyPaid}<small>/${STATE.users.length}</small></b><span>จ่ายครบแล้ว</span></div>
+        <div class="wl-stat"><b>${pend}</b><span>สลิปรอตรวจ</span></div>
+        <div class="wl-stat"><b>${nExp}</b><span>รายการเก็บ</span></div>
+      </div>
+
+      <button class="wl-cta fade-up" onclick="setState({loginStage:'pickRole'})">เข้าสู่ระบบ ${svgIcon('fwd',18)}</button>
+
+      <div class="wl-foot fade-up">
         เหรัญญิก · <b style="color:var(--ink-2)">${esc(ADMIN_NAME)} (นิติพัฒน์)</b>
       </div>
     </div>
@@ -1095,13 +1572,13 @@ function renderPinScreen() {
   if (!u) return renderWelcome();
   const buf = STATE.pinBuf || '';
   return `<div style="min-height:100vh;display:flex;flex-direction:column;padding:14px 16px calc(20px + env(safe-area-inset-bottom));padding-top:max(14px,env(safe-area-inset-top))">
-    <div style="width:100%;max-width:380px;margin:0 auto;flex:1;display:flex;flex-direction:column">
-      <div style="margin-bottom:16px">
+    <div class="pin-screen" style="width:100%;max-width:380px;margin:0 auto;flex:1;display:flex;flex-direction:column">
+      <div class="pin-top" style="margin-bottom:16px">
         <button class="btn-g" style="width:36px;height:36px;padding:0;border-radius:10px;display:flex;align-items:center;justify-content:center" onclick="setState({loginStage:'choose',pinBuf:''})">${svgIcon('back',18)}</button>
       </div>
 
       <!-- Compact name card (NO animation class — won't bounce on re-render) -->
-      <div style="padding:13px 16px;border-radius:16px;background:var(--surface-2);border:1px solid var(--border);display:flex;align-items:center;gap:12px;margin-bottom:24px">
+      <div class="pin-who" style="padding:13px 16px;border-radius:16px;background:var(--surface-2);border:1px solid var(--border);display:flex;align-items:center;gap:12px;margin-bottom:16px">
         ${avatarHtml(u.name, 42, 'mint')}
         <div style="flex:1;min-width:0">
           <div style="font-size:11px;color:var(--ink-3);font-weight:500">กำลังเข้าระบบในชื่อ</div>
@@ -1109,22 +1586,25 @@ function renderPinScreen() {
         </div>
       </div>
 
-      <div style="text-align:center;margin-bottom:18px">
+      <div style="text-align:center;margin-bottom:8px">
         <h1 class="h2" style="margin-bottom:6px">ใส่รหัสนักเรียน</h1>
-        <p style="font-size:12px;color:var(--ink-3)">5 หลัก · รหัสประจำตัวที่โรงเรียนออกให้</p>
+        <p class="pin-sub" style="font-size:12px;color:var(--ink-3)">5 หลัก · รหัสประจำตัวที่โรงเรียนออกให้</p>
       </div>
 
-      <div class="pin-dots" style="margin-bottom:14px">
-        ${[0,1,2,3,4].map(i=>`<div class="${i<buf.length?'f':''}"></div>`).join('')}
+      <div class="pinrow${pinBusy?' spin':''}">
+        <div class="pinrow__hub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+        ${Array.from({length:PIN_LEN}, (_, i) => pinSlotHtml(i, buf.length, pinBusy)).join('')}
       </div>
 
-      <div style="text-align:center;font-size:12px;color:var(--ink-3);margin-bottom:28px">
+      <div id="pin-status" class="pin-status" aria-live="polite">${pinBusy ? 'กำลังตรวจสอบ…' : PIN_HINT}</div>
+
+      <div class="pin-forgot" style="text-align:center;font-size:12px;color:var(--ink-3);margin-bottom:20px">
         ลืมรหัส? <b style="color:var(--primary-deep);font-weight:600">ติดต่อ${esc(ADMIN_NAME)}</b>
       </div>
 
       <div style="flex:1"></div>
 
-      <div class="numpad">
+      <div class="numpad${pinBusy?' busy':''}">
         ${[1,2,3,4,5,6,7,8,9].map(n=>`<button onclick="pinPress(${n})">${n}</button>`).join('')}
         <button class="back" onclick="pinClear()">ล้าง</button>
         <button onclick="pinPress(0)">0</button>
@@ -1164,26 +1644,196 @@ function renderMobileUser() {
   else if (r === '#/u/chart') { body = renderMobileChart(); tab = 'chart'; }
   else if (r === '#/u/lb') { body = renderMobileLeaderboard(); tab = 'lb'; }
   else { body = renderMobileHome(); tab = 'home'; }
-  // Pay wizard has its own back nav + sticky CTA; skip the floating bottom nav to avoid overlap
-  const showBottomNav = tab !== 'pay';
-  return `<div class="m-shell"${showBottomNav?'':' style="padding-bottom:30px"'}>${body}${showBottomNav?renderBottomNav(tab):''}</div>`;
+  return renderBottomShell(tab, body);
 }
 
-function renderBottomNav(active) {
-  const items = [
-    {k:'home', i:'home', l:'หน้าหลัก', h:'#/u/home'},
-    {k:'pay',  i:'send', l:'จ่ายเงิน', h:'#/u/pay'},
-    {k:'chart',i:'chart',l:'สถิติ',    h:'#/u/chart'},
-    {k:'lb',   i:'trophy',l:'อันดับ',  h:'#/u/lb'},
-  ];
-  return `<div class="m-bottom-nav">
-    <div class="pill-bar">
-      ${items.map(it => `<button class="${active===it.k?'on':''}" onclick="${it.k==='pay'?'startPayWizard()':`navigate('${it.h}')`}">
-        ${svgIcon(it.i, 22)}
-        <span>${it.l}</span>
-      </button>`).join('')}
+// ── Persistent nav shells ──
+// A shell (bottom nav on phones, sidebar on desktop) is built once per role; later renders swap only
+// #app-main and call shell.apply(), so the active marker can slide instead of being rebuilt.
+function navUnpaid() {
+  const uid = STATE.session?.uid;
+  return STATE.expenses.filter(e => !STATE.payments.find(p => p.uid===uid && p.eid===e.id));
+}
+const NAV_ACT = {
+  home: () => navigate('#/u/home'), pay: () => startPayWizard(), chart: () => navigate('#/u/chart'), lb: () => navigate('#/u/lb'),
+  ov: () => navigate('#/a/ov'), vr: () => navigate('#/a/vr'), ex: () => navigate('#/a/ex'),
+  mb: () => navigate('#/a/mb'), qr: () => navigate('#/a/qr'), bl: () => navigate('#/a/bl'),
+  logout: () => logout(),
+};
+function navGo(e, k) { e.stopPropagation(); NAV_ACT[k]?.(); }
+
+// Electric streak between two points on a canvas: head moves LINEAR, tail trails by LAG and
+// catches up, then a short ember fades on the target. axis 'x' = bottom nav, 'y' = sidebar edge.
+let navArcRaf = 0;
+function navArc(cvs, axis, a0, a1, fixed) {
+  if (!cvs || reduceMotion()) return;
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const w = cvs.clientWidth, h = cvs.clientHeight;
+  cvs.width = w * dpr; cvs.height = h * dpr;
+  const ctx = cvs.getContext('2d');
+  const T_MOVE = 0.42, LAG = 0.16, T_FADE = 0.32;
+  const dir = Math.sign(a1 - a0), D = Math.abs(a1 - a0), v = D / T_MOVE, t0 = performance.now();
+  cancelAnimationFrame(navArcRaf);
+  (function frame(now) {
+    if (!cvs.isConnected) return;
+    const t = (now - t0) / 1000;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+    const head = a0 + dir * Math.min(D, v * t);
+    const tail = a0 + dir * Math.min(D, v * Math.max(0, t - LAG));
+    let alpha = 1, from = Math.min(head, tail) - 4, to = Math.max(head, tail) + 4;
+    if (t > T_MOVE + LAG) {
+      const k = Math.min(1, (t - T_MOVE - LAG) / T_FADE);
+      alpha = 1 - k; from = a1 - 12; to = a1 + 12;
+    }
+    if (alpha <= 0) return;
+    const n = Math.max(3, Math.round((to - from) / 5)), pts = [];
+    for (let i = 0; i <= n; i++) {
+      const u = i / n, along = from + (to - from) * u;
+      const jit = (Math.random() - .5) * 3.2 * Math.sin(Math.PI * u);   // amplitude tapers to 0 so the ends stay pinned
+      pts.push(axis === 'x' ? [along, fixed + jit] : [fixed + jit, along]);
+    }
+    const stroke = (lw, col) => { ctx.beginPath(); pts.forEach(([px,py],i)=> i ? ctx.lineTo(px,py) : ctx.moveTo(px,py)); ctx.lineWidth = lw; ctx.strokeStyle = col; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.stroke(); };
+    stroke(8, `rgba(95,221,181,${.25*alpha})`);
+    stroke(3.2, `rgba(52,199,155,${.85*alpha})`);
+    stroke(1.3, `rgba(232,255,246,${alpha})`);
+    navArcRaf = requestAnimationFrame(frame);
+  })(t0);
+}
+
+// ── Bottom nav (phones, students) ──
+const BN_ITEMS = [
+  {k:'home', i:'home', l:'หน้าหลัก'},
+  {k:'pay',  i:'send', l:'จ่ายเงิน'},
+  {k:'chart',i:'chart',l:'สถิติ'},
+  {k:'lb',   i:'trophy',l:'อันดับ'},
+];
+function renderBottomShell(tab, body) {
+  const ai = Math.max(0, BN_ITEMS.findIndex(it => it.k === tab));
+  STATE._shell = { key: 'user|bn', main: body, apply: (animate) => bnApply(tab, ai, animate) };
+  // Pay wizard has its own back nav + sticky CTA, so the bottom nav hides there
+  return `<div class="m-shell${tab==='pay'?' no-nav':''}" id="app-shell" data-key="user|bn">
+    <div id="app-main">${body}</div>
+    <div class="m-bottom-nav">
+      <div class="pill-bar" id="bn-bar">
+        <span class="bn-ind" id="bn-ind" aria-hidden="true"></span>
+        <canvas class="bn-arc" id="bn-arc" aria-hidden="true"></canvas>
+        ${BN_ITEMS.map((it,i) => `<button class="${i===ai?'on':''}" data-k="${it.k}" aria-current="${i===ai?'page':'false'}" onclick="navGo(event,'${it.k}')">
+          ${svgIcon(it.i, 22)}
+          <span>${it.l}</span>
+          ${it.k==='pay' && navUnpaid().length ? '<i class="bn-dot" aria-label="มีรายการค้างจ่าย"></i>' : ''}
+        </button>`).join('')}
+      </div>
     </div>
   </div>`;
+}
+function bnApply(tab, ai, animate) {
+  const shell = document.getElementById('app-shell'), bar = document.getElementById('bn-bar'), ind = document.getElementById('bn-ind');
+  if (!shell || !bar || !ind) return;
+  shell.classList.toggle('no-nav', tab === 'pay');
+  const btns = [...bar.querySelectorAll('button')];
+  const prev = btns.findIndex(b => b.classList.contains('on'));
+  btns.forEach((b, i) => {
+    b.classList.toggle('on', i === ai);
+    b.setAttribute('aria-current', i === ai ? 'page' : 'false');
+    if (b.dataset.k === 'pay') {
+      const has = navUnpaid().length > 0, dot = b.querySelector('.bn-dot');
+      if (has && !dot) b.insertAdjacentHTML('beforeend', '<i class="bn-dot" aria-label="มีรายการค้างจ่าย"></i>');
+      if (!has && dot) dot.remove();
+    }
+  });
+  const b = btns[ai];
+  if (!b || !b.offsetWidth) return;   // hidden (pay wizard): place it next time it shows
+  const moving = animate && prev >= 0 && prev !== ai && ind.offsetWidth > 0;
+  if (!moving) ind.style.transition = 'none';
+  ind.style.width = b.offsetWidth + 'px';
+  ind.style.transform = `translateX(${b.offsetLeft}px)`;
+  if (!moving) { ind.offsetWidth; ind.style.transition = ''; return; }
+  const c = x => x.offsetLeft + x.offsetWidth / 2;
+  navArc(document.getElementById('bn-arc'), 'x', c(btns[prev]), c(b), bar.clientHeight - 12);
+}
+
+// ── Desktop sidebar (click the white area to collapse / expand, remembered) ──
+const SX_LOGOUT = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><path d="M10 17l-5-5 5-5M5 12h11"/></svg>';
+let sxMini = localStorage.getItem('cf_nav_mini') === '1';
+function sxItems(role) {
+  if (role === 'admin') return [
+    {k:'ov', l:'ภาพรวม',  i:'home'},
+    {k:'vr', l:'ตรวจสลิป', i:'check', badge: pendingPays().length},
+    {k:'ex', l:'รายการ',   i:'receipt'},
+    {k:'mb', l:'สมาชิก',   i:'users'},
+    {k:'qr', l:'QR Code',  i:'qr'},
+    {k:'bl', l:'ยอดเงิน',  i:'cash'},
+  ];
+  return [
+    {k:'home',  l:'หน้าหลัก', i:'home'},
+    {k:'pay',   l:'จ่ายเงิน', i:'send', badge: navUnpaid().length},
+    {k:'chart', l:'สถิติ',    i:'chart'},
+    {k:'lb',    l:'อันดับ',   i:'trophy'},
+  ];
+}
+function sxCtaHtml(role) {
+  if (role !== 'user') return '';
+  const un = navUnpaid();
+  if (!un.length) return '';
+  const sum = un.reduce((t,e)=>t+e.amount,0);
+  return `<button class="sx-cta" onclick="navGo(event,'pay')"><span class="sx-cta-ic">${svgIcon('send',14)}</span><span class="sx-fade"><b>ค้างจ่าย ${thb(sum)}</b><small>${un.length} รายการ · จ่ายเลย</small></span></button>`;
+}
+function sxBadgeHtml(n) { return n ? `<span class="sx-badge" aria-label="${n} รายการ">${n}</span>` : ''; }
+function renderSideShell(role, active, main) {
+  const key = role + '|sx';
+  const items = sxItems(role);
+  const ai = Math.max(0, items.findIndex(it => it.k === active));
+  STATE._shell = { key, main, apply: (animate) => sxApply(role, ai, animate) };
+  const u = role === 'user' ? STATE.users.find(x => x.id === STATE.session?.uid) : null;
+  return `<div class="sx-shell${sxMini?' mini':''}" id="app-shell" data-key="${key}">
+    <aside class="sx${sxMini?' mini':''}" id="sx" onclick="sxRailClick(event)" aria-label="เมนู">
+      <div class="sx-in">
+        <div class="sx-brand"><div class="sx-logo" aria-hidden="true">🏦</div><div class="sx-fade"><div class="num" style="font-size:12.5px;font-weight:800;letter-spacing:1.6px;color:var(--primary-deep)">CLASS FUND</div><div style="font-size:11px;color:var(--ink-3);margin-top:1px">${esc(CLASS_NAME)}</div></div></div>
+        <div class="sx-lbl">เมนู</div>
+        <nav class="sx-nav" id="sx-nav">
+          <span class="sx-glow" id="sx-glow" aria-hidden="true"></span>
+          <canvas class="sx-arc" id="sx-arc" aria-hidden="true"></canvas>
+          ${items.map((it,i) => `<button class="sx-item${i===ai?' on':''}" data-k="${it.k}" data-tip="${it.l}" aria-current="${i===ai?'page':'false'}" onclick="navGo(event,'${it.k}')">${svgIcon(it.i,20)}<span class="sx-fade">${it.l}</span>${sxBadgeHtml(it.badge)}</button>`).join('')}
+        </nav>
+        <div id="sx-cta">${sxCtaHtml(role)}</div>
+        <div class="sx-me">
+          ${role === 'admin'
+            ? `<div style="width:40px;height:40px;border-radius:12px;background:var(--accent-tint);border:1px solid rgba(245,182,56,.32);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0">👑</div><span class="sx-fade"><b>${esc(ADMIN_NAME)} · เหรัญญิก</b><small>Admin</small></span>`
+            : u ? `${avatarHtml(u.name,40,'mint')}<span class="sx-fade" style="min-width:0"><b style="overflow:hidden;text-overflow:ellipsis">${esc(u.nick || stripPrefix(u.name))}</b><small>นักเรียน</small></span>` : ''}
+          <button class="sx-out sx-fade" onclick="navGo(event,'logout')" title="ออกจากระบบ" aria-label="ออกจากระบบ">${SX_LOGOUT}</button>
+        </div>
+      </div>
+    </aside>
+    <div class="sx-main" id="app-main">${main}</div>
+  </div>`;
+}
+function sxRailClick(e) {
+  if (e.target.closest('button')) return;
+  sxMini = !sxMini;
+  localStorage.setItem('cf_nav_mini', sxMini ? '1' : '0');
+  document.getElementById('app-shell')?.classList.toggle('mini', sxMini);
+  document.getElementById('sx')?.classList.toggle('mini', sxMini);
+}
+function sxApply(role, ai, animate) {
+  const items = sxItems(role);
+  const btns = [...document.querySelectorAll('#sx-nav .sx-item')];
+  const prev = btns.findIndex(b => b.classList.contains('on'));
+  btns.forEach((b, i) => {
+    b.classList.toggle('on', i === ai);
+    b.setAttribute('aria-current', i === ai ? 'page' : 'false');
+    b.querySelector('.sx-badge')?.remove();
+    if (items[i]?.badge) b.insertAdjacentHTML('beforeend', sxBadgeHtml(items[i].badge));
+  });
+  const cta = document.getElementById('sx-cta');
+  if (cta) cta.innerHTML = sxCtaHtml(role);
+  const glow = document.getElementById('sx-glow');
+  if (!glow || !btns[ai]) return;
+  const moving = animate && prev >= 0 && prev !== ai;
+  if (!moving) glow.style.transition = 'none';
+  glow.style.transform = `translateY(${btns[ai].offsetTop}px)`;
+  if (!moving) { glow.offsetWidth; glow.style.transition = ''; return; }
+  navArc(document.getElementById('sx-arc'), 'y', btns[prev].offsetTop + 22, btns[ai].offsetTop + 22, 2.5);
 }
 
 function renderMobileTopUser(opts={}) {
@@ -1225,18 +1875,18 @@ function renderMobileHome() {
       <div style="position:relative">
         <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;opacity:.86;margin-bottom:4px">
           <span>ในกระเป๋าห้อง</span>
-          <span class="pill pill-ghost" style="font-size:10px">+${thb(got)} ปีนี้</span>
+          <span class="pill pill-ghost" style="font-size:10px">+${thb(got)} เทอมนี้</span>
         </div>
         <div class="num-hero">
           <span style="font-size:24px;font-weight:500;margin-right:3px;opacity:.85">฿</span>${cnum(grand,'home-grand')}
         </div>
         <div style="margin-top:14px;padding-top:11px;border-top:1px solid rgba(255,255,255,.16)">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-            <span style="font-size:11px;opacity:.82">เป้า ปี 2569</span>
+            <span style="font-size:11px;opacity:.82">เป้าเทอม 2/2569</span>
             <span class="num" style="font-size:12px;font-weight:700">${pct.toFixed(0)}%</span>
           </div>
           <div style="height:8px;background:rgba(255,255,255,.18);border-radius:5px;overflow:hidden">
-            <div style="height:100%;width:${pct.toFixed(1)}%;background:linear-gradient(90deg,#F5B638,#FFD56A);border-radius:5px;box-shadow:0 0 12px rgba(245,182,56,.65);transition:width .8s cubic-bezier(.34,1.4,.64,1)"></div>
+            <div class="grow stripes" style="height:100%;width:${pct.toFixed(1)}%;background:linear-gradient(90deg,#F5B638,#FFD56A);border-radius:5px;box-shadow:0 0 12px rgba(245,182,56,.65);transition:width .8s cubic-bezier(.34,1.4,.64,1)"></div>
           </div>
           <div style="margin-top:8px;font-size:11px;opacity:.85"><b class="num">${thb(got)}</b> / ${thb(target)}</div>
         </div>
@@ -1341,7 +1991,7 @@ function renderPayStep1() {
         }).join('')}
       </div>
     </div>
-    <div style="position:fixed;left:0;right:0;bottom:0;padding:14px 16px calc(20px + env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(250,248,242,0),#FAF8F2 30%);z-index:30">
+    <div class="sx-fixed" style="position:fixed;left:0;right:0;bottom:0;padding:14px 16px calc(20px + env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(250,248,242,0),#FAF8F2 30%);z-index:30">
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;padding:0 4px">
         <span style="font-size:12px;color:var(--ink-3)">เลือก ${sel.length} รายการ</span>
         <span class="num" style="font-size:18px;font-weight:800;color:var(--primary-deep)">${thb(total)}</span>
@@ -1397,28 +2047,35 @@ function renderPayStep2() {
           <h3 class="h3">แนบสลิปโอนเงิน</h3>
           <span class="pill pill-rose" style="font-size:10px;padding:2px 8px">บังคับ</span>
         </div>
-        ${slip ? `<div style="text-align:center">
+        <div id="slip-zone">${slip ? `<div style="text-align:center">
           <div style="display:inline-block;position:relative">
             <img src="${slip}" style="max-width:100%;max-height:240px;border-radius:12px;border:2px solid var(--primary);box-shadow:0 8px 24px rgba(15,138,107,.18);cursor:zoom-in" onclick="openSlipZoom('${slip}')"/>
             <div style="position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(15,138,107,.4)">${svgIcon('check',16)}</div>
           </div>
-          <div style="margin-top:10px"><button class="btn btn-g" style="font-size:12px;padding:8px 14px" onclick="setState({paySlip:null})">เปลี่ยนสลิป</button></div>
+          ${STATE.paySlipInfo ? `<div style="font-size:11px;color:var(--ink-3);margin-top:8px">ย่อรูปแล้ว · <span class="num">${esc(STATE.paySlipInfo)}</span></div>` : ''}
+          <div style="margin-top:10px"><button class="btn btn-g" style="font-size:12px;padding:8px 14px" onclick="setState({paySlip:null,paySlipInfo:''})">เปลี่ยนสลิป</button></div>
         </div>` : `<label for="slip-inp" style="display:block;border:2px dashed rgba(15,138,107,.32);border-radius:14px;padding:24px;text-align:center;cursor:pointer;background:rgba(15,138,107,.04)">
           <div style="font-size:34px;margin-bottom:8px">📷</div>
           <div style="font-weight:600;font-size:13px;color:var(--primary-deep)">แตะเพื่อเลือก / ถ่ายสลิป</div>
           <div style="font-size:11px;color:var(--ink-3);margin-top:4px">JPG, PNG · บังคับแนบก่อนส่ง</div>
         </label>
-        <input id="slip-inp" type="file" accept="image/*" capture="environment" onchange="uploadSlip(this)" style="display:none"/>`}
+        <input id="slip-inp" type="file" accept="image/*" capture="environment" onchange="uploadSlip(this)" style="display:none"/>`}</div>
         <div style="margin-top:12px;padding:10px 12px;background:var(--surface-2);border-radius:10px;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-2)">
           <span style="font-size:14px">🔒</span>
           <span>พร้อมส่งให้ Admin · รอ Admin ตรวจ</span>
         </div>
       </div>
     </div>
-    <div style="position:fixed;left:0;right:0;bottom:0;padding:14px 16px calc(20px + env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(250,248,242,0),#FAF8F2 30%);z-index:30">
-      <button class="btn btn-p" style="width:100%;padding:15px;${slip?'':'opacity:.4;pointer-events:none'}" onclick="pwNext()">
-        ${svgIcon('send',16)} ส่งให้ Admin ตรวจ
-      </button>
+    <div class="sx-fixed" style="position:fixed;left:0;right:0;bottom:0;padding:14px 16px calc(20px + env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(250,248,242,0),#FAF8F2 30%);z-index:30">
+      <div class="glance" id="glance" data-state="idle">
+        <span class="glance__aura" aria-hidden="true"></span>
+        <button class="glance__btn" ${slip?'':'disabled'} onclick="pwNext()">
+          <span class="glance__word">${svgIcon('send',16)} ส่งให้ Admin ตรวจ</span>
+          <span class="glance__icon" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V5a1 1 0 011-1h3M16 4h3a1 1 0 011 1v3M20 16v3a1 1 0 01-1 1h-3M8 20H5a1 1 0 01-1-1v-3"/><path d="M9 9h6M9 12h6M9 15h3"/></svg></span>
+          <span class="glance__res" id="glance-res"></span>
+          <i class="glance__beam" aria-hidden="true"></i>
+        </button>
+      </div>
     </div>
   </div>`;
 }
@@ -1482,8 +2139,8 @@ function renderMobileChart() {
   const got = totalVerified();
   const grand = STATE.savedBalance + got;
   const stats = [
-    {l:'ยกมา ปี 68', n:STATE.savedBalance, ck:'chart-saved', c:'#D69A1F', i:'wallet', iconBg:'rgba(245,182,56,.18)', bg:'linear-gradient(135deg,rgba(245,182,56,.14),rgba(245,182,56,.04))', ring:'rgba(245,182,56,.30)'},
-    {l:'เก็บได้ ปี 69', n:got, ck:'chart-got', c:'#0A6B53', i:'cash', iconBg:'rgba(15,138,107,.16)', bg:'linear-gradient(135deg,rgba(15,138,107,.12),rgba(15,138,107,.04))', ring:'rgba(15,138,107,.26)'},
+    {l:'ยอดยกมา', n:STATE.savedBalance, ck:'chart-saved', c:'#D69A1F', i:'wallet', iconBg:'rgba(245,182,56,.18)', bg:'linear-gradient(135deg,rgba(245,182,56,.14),rgba(245,182,56,.04))', ring:'rgba(245,182,56,.30)'},
+    {l:'เก็บได้เทอมนี้', n:got, ck:'chart-got', c:'#0A6B53', i:'cash', iconBg:'rgba(15,138,107,.16)', bg:'linear-gradient(135deg,rgba(15,138,107,.12),rgba(15,138,107,.04))', ring:'rgba(15,138,107,.26)'},
     {l:'รวมในกระเป๋า', n:grand, ck:'chart-grand', c:'#063D2F', i:'wallet', iconBg:'rgba(10,107,83,.18)', bg:'linear-gradient(135deg,rgba(10,107,83,.14),rgba(10,107,83,.04))', ring:'rgba(10,107,83,.30)'},
   ];
   return `${renderMobileTopUser()}
@@ -1525,8 +2182,8 @@ function renderMobileChart() {
             <span class="num" style="font-size:11px;color:var(--primary-deep)">${paid}/${n} คน · ${thb(paid*e.amount)}</span>
           </div>
           <div class="bar">
-            <div class="fill" style="width:${paidPct.toFixed(1)}%"></div>
-            <div class="pending" style="left:${paidPct.toFixed(1)}%;width:${pendPct.toFixed(1)}%"></div>
+            <div class="fill grow" style="width:${paidPct.toFixed(1)}%"></div>
+            <div class="pending grow" style="left:${paidPct.toFixed(1)}%;width:${pendPct.toFixed(1)}%"></div>
           </div>
           ${pend>0?`<div style="font-size:10px;color:var(--warning);margin-top:3px">⏳ รอตรวจ ${pend} คน</div>`:''}
         </div>`;
@@ -1669,8 +2326,8 @@ function renderAdmOverview() {
   const pct = target>0 ? Math.min(100, got/target*100) : 0;
   const today = new Date().toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'});
   const stats = [
-    {l:'ยกมา ปี 68', n:STATE.savedBalance, ck:'ov-saved', prefix:'฿', c:'#D69A1F', i:'wallet', bg:'var(--accent-tint)', ring:'rgba(245,182,56,.3)'},
-    {l:'เก็บได้ ปี 69', n:got, ck:'ov-got', prefix:'฿', c:'#0A6B53', i:'cash', bg:'var(--primary-tint)', ring:'rgba(15,138,107,.26)'},
+    {l:'ยอดยกมา', n:STATE.savedBalance, ck:'ov-saved', prefix:'฿', c:'#D69A1F', i:'wallet', bg:'var(--accent-tint)', ring:'rgba(245,182,56,.3)'},
+    {l:'เก็บได้เทอมนี้', n:got, ck:'ov-got', prefix:'฿', c:'#0A6B53', i:'cash', bg:'var(--primary-tint)', ring:'rgba(15,138,107,.26)'},
     {l:'รวมทั้งหมด', n:grand, ck:'ov-grand', prefix:'฿', c:'#063D2F', i:'wallet', bg:'#E8EEF7', ring:'rgba(31,61,112,.22)'},
     {l:'รอตรวจ', n:pend, ck:'ov-pend', prefix:'', c:'#A66A0F', i:'check', bg:'var(--warning-tint)', ring:'rgba(232,154,42,.3)'},
   ];
@@ -1691,7 +2348,7 @@ function renderAdmOverview() {
   ${target>0?`<div class="hero-mint fade-up" style="margin-bottom:14px;padding:18px 20px">
     <div style="position:relative">
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;gap:10px">
-        <span style="font-size:12px;opacity:.85">เป้า ปี 2569 · ${STATE.users.length} คน</span>
+        <span style="font-size:12px;opacity:.85">เป้าเทอม 2/2569 · ${STATE.users.length} คน</span>
         <span class="pill pill-ghost" style="font-size:11px;padding:4px 10px">${pct.toFixed(0)}%</span>
       </div>
       <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:12px;flex-wrap:wrap">
@@ -1699,7 +2356,7 @@ function renderAdmOverview() {
         <span style="font-size:12px;opacity:.75">/ ${thb(target)}</span>
       </div>
       <div style="height:9px;border-radius:5px;background:rgba(255,255,255,.18);overflow:hidden">
-        <div style="height:100%;width:${pct.toFixed(1)}%;background:linear-gradient(90deg,#F5B638,#FFD56A);border-radius:5px;box-shadow:0 0 12px rgba(245,182,56,.7);transition:width .8s"></div>
+        <div class="grow stripes" style="height:100%;width:${pct.toFixed(1)}%;background:linear-gradient(90deg,#F5B638,#FFD56A);border-radius:5px;box-shadow:0 0 12px rgba(245,182,56,.7);transition:width .8s"></div>
       </div>
       <div style="margin-top:10px;font-size:11px;opacity:.85">เหลืออีก <b>${thb(target-got)}</b> ก็ถึงเป้า · ${ok.length} รายการยืนยันแล้ว 🚀</div>
     </div>
@@ -1938,11 +2595,11 @@ function renderAdmBalance() {
       <h3 class="h2" style="margin-bottom:18px;text-align:center">💵 ยอดเงินสะสม</h3>
       <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
         <div style="background:var(--accent-tint);border:1px solid rgba(245,182,56,.28);border-radius:14px;padding:18px;text-align:center">
-          <div style="font-size:11px;color:var(--ink-3);margin-bottom:4px">ยอดสะสม ปี 2568 (ยกมา)</div>
+          <div style="font-size:11px;color:var(--ink-3);margin-bottom:4px">ยอดยกมา</div>
           <div class="num" style="font-size:28px;font-weight:800;color:#D69A1F">${thb(STATE.savedBalance)}</div>
         </div>
         <div style="background:var(--primary-tint);border:1px solid rgba(15,138,107,.22);border-radius:14px;padding:18px;text-align:center">
-          <div style="font-size:11px;color:var(--ink-3);margin-bottom:4px">เก็บได้ ปี 2569 (ยืนยันแล้ว)</div>
+          <div style="font-size:11px;color:var(--ink-3);margin-bottom:4px">เก็บได้เทอมนี้ (ยืนยันแล้ว)</div>
           <div class="num" style="font-size:28px;font-weight:800;color:var(--primary)">${thb(got)}</div>
         </div>
         <div style="background:linear-gradient(135deg,#0F8A6B,#0A6B53);color:#fff;border-radius:14px;padding:18px;text-align:center">
@@ -1950,7 +2607,7 @@ function renderAdmBalance() {
           <div class="num" style="font-size:30px;font-weight:800">${thb(grand)}</div>
         </div>
       </div>
-      <h4 style="font-size:13px;font-weight:600;margin-bottom:10px;color:var(--ink-2)">✏️ แก้ไขยอดสะสม ปี 2568</h4>
+      <h4 style="font-size:13px;font-weight:600;margin-bottom:10px;color:var(--ink-2)">✏️ แก้ไขยอดยกมา</h4>
       <div style="display:flex;gap:8px">
         <input id="bal-inp" type="number" value="${STATE.savedBalance}"/>
         <button class="btn btn-p" onclick="updateBal()" style="white-space:nowrap">บันทึก</button>
@@ -1996,52 +2653,9 @@ function renderDesktopUser() {
 }
 
 function renderDesktopShell({nav, activeNav, body, title, eyebrow, action=''}) {
-  const u = STATE.session?.role==='user' ? STATE.users.find(x=>x.id===STATE.session.uid) : null;
-  const pend = pendingPays().length;
-  const adminItems = [
-    {k:'ov', l:'ภาพรวม', i:'home', h:'#/a/ov'},
-    {k:'vr', l:'ตรวจสลิป', i:'check', h:'#/a/vr', badge:pend},
-    {k:'ex', l:'รายการ', i:'receipt', h:'#/a/ex'},
-    {k:'mb', l:'สมาชิก', i:'users', h:'#/a/mb'},
-    {k:'qr', l:'QR Code', i:'qr', h:'#/a/qr'},
-    {k:'bl', l:'ยอดเงิน', i:'cash', h:'#/a/bl'},
-  ];
-  const userItems = [
-    {k:'home', l:'หน้าหลัก', i:'home', h:'#/u/home'},
-    {k:'pay', l:'จ่ายเงิน', i:'send', h:'#/u/pay'},
-    {k:'chart', l:'สถิติ', i:'chart', h:'#/u/chart'},
-    {k:'lb', l:'อันดับ', i:'trophy', h:'#/u/lb'},
-  ];
-  const items = nav==='admin' ? adminItems : userItems;
   const isAdmin = nav==='admin';
-  return `<div class="d-shell">
-    <aside class="d-sidebar">
-      <div class="d-brand">
-        <div class="d-brand-logo">🏦</div>
-        <div style="min-width:0">
-          <div class="num" style="font-size:13px;font-weight:800;letter-spacing:1.5px;background:linear-gradient(135deg,#0F8A6B,#0A6B53);-webkit-background-clip:text;-webkit-text-fill-color:transparent">CLASS FUND</div>
-          <div style="font-size:11px;color:var(--ink-3);margin-top:2px">${esc(CLASS_NAME)}</div>
-        </div>
-      </div>
-      <nav class="d-nav">
-        ${items.map(it=>`<button class="${activeNav===it.k?'on':''}" onclick="${it.k==='pay'&&nav==='user'?'startPayWizard()':`navigate('${it.h}')`}">
-          ${svgIcon(it.i,18)} <span>${it.l}</span>
-          ${it.badge?`<span class="d-nav-badge">${it.badge}</span>`:''}
-        </button>`).join('')}
-      </nav>
-      <div class="d-user-card">
-        ${isAdmin ? `<div style="width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,rgba(245,182,56,.22),rgba(245,182,56,.08));border:1px solid rgba(245,182,56,.32);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">👑</div>
-        <div style="flex:1;min-width:0">
-          <div style="font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(ADMIN_NAME)} · เหรัญญิก</div>
-          <div style="font-size:11px;color:var(--ink-3)">Admin</div>
-        </div>` : u ? `${avatarHtml(u.name,36,'mint')}
-        <div style="flex:1;min-width:0">
-          <div style="font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(u.nick || stripPrefix(u.name))}</div>
-          <div style="font-size:11px;color:var(--ink-3)">PIN ${esc(u.pin||'-')}</div>
-        </div>` : ''}
-        <button class="btn-g" style="width:30px;height:30px;padding:0;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--danger);flex-shrink:0" onclick="logout()" title="ออกจากระบบ">${svgIcon('close',14)}</button>
-      </div>
-    </aside>
+  const pend = pendingPays().length;
+  return renderSideShell(isAdmin ? 'admin' : 'user', activeNav, `
     <main class="d-main">
       <header class="d-topbar">
         <div>
@@ -2053,9 +2667,8 @@ function renderDesktopShell({nav, activeNav, body, title, eyebrow, action=''}) {
           ${action}
         </div>
       </header>
-      <section class="d-content fade-up">${body}</section>
-    </main>
-  </div>`;
+      <section class="d-content">${body}</section>
+    </main>`);
 }
 
 function renderDesktopUserHome() {
@@ -2078,18 +2691,18 @@ function renderDesktopUserHome() {
         <div style="position:relative">
           <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;opacity:.85;margin-bottom:6px">
             <span>ในกระเป๋าห้อง</span>
-            <span class="pill pill-ghost" style="font-size:11px">+${thb(got)} ปีนี้</span>
+            <span class="pill pill-ghost" style="font-size:11px">+${thb(got)} เทอมนี้</span>
           </div>
           <div class="num-hero" style="font-size:54px">
             <span style="font-size:28px;font-weight:500;margin-right:4px;opacity:.85">฿</span>${thbb(grand)}
           </div>
           <div style="margin-top:18px;padding-top:14px;border-top:1px solid rgba(255,255,255,.16)">
             <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
-              <span style="font-size:12px;opacity:.85">เป้า ปี 2569 · ${STATE.users.length} คน</span>
+              <span style="font-size:12px;opacity:.85">เป้าเทอม 2/2569 · ${STATE.users.length} คน</span>
               <span class="num" style="font-size:14px;font-weight:700">${pct.toFixed(0)}%</span>
             </div>
             <div style="height:10px;background:rgba(255,255,255,.18);border-radius:5px;overflow:hidden">
-              <div style="height:100%;width:${pct.toFixed(1)}%;background:linear-gradient(90deg,#F5B638,#FFD56A);border-radius:5px;box-shadow:0 0 14px rgba(245,182,56,.7);transition:width .8s"></div>
+              <div class="grow stripes" style="height:100%;width:${pct.toFixed(1)}%;background:linear-gradient(90deg,#F5B638,#FFD56A);border-radius:5px;box-shadow:0 0 14px rgba(245,182,56,.7);transition:width .8s"></div>
             </div>
             <div style="margin-top:8px;font-size:12px;opacity:.85"><b class="num">${thb(got)}</b> / ${thb(target)}</div>
           </div>
@@ -2235,7 +2848,7 @@ function renderLeaderboardList() {
           <div style="flex:1;min-width:0">
             <div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(u.nick || stripPrefix(u.name))}${isMe?' <span style="color:var(--primary-deep);font-size:11px">· คุณ</span>':''}</div>
             <div style="margin-top:4px;height:5px;background:rgba(15,46,42,.07);border-radius:3px;overflow:hidden;max-width:160px">
-              <div style="height:100%;width:${pct.toFixed(0)}%;background:var(--primary);border-radius:3px"></div>
+              <div class="grow" style="height:100%;width:${pct.toFixed(0)}%;background:var(--primary);border-radius:3px"></div>
             </div>
           </div>
           <div class="num" style="font-size:12px;font-weight:700;color:${u.cnt>0?(isMe?'var(--primary-deep)':'var(--ink-2)'):'var(--ink-3)'}">${u.cnt}/${total}</div>
