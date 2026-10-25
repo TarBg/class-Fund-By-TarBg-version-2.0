@@ -2576,7 +2576,7 @@ function slipToolbar() {
 }
 const SLIP_NOT_FOUND = '<div class="card" style="padding:26px 20px;text-align:center;color:var(--ink-3);font-size:13px">ไม่พบชื่อที่ค้นหาในคิวรอตรวจ</div>';
 // One collapsible slip box. Rows: view-slip button, name + class number, item, amount, time, status.
-function slipBox({ icon, title, note, all, openKey, defaultOpen, itemOf, approve }) {
+function slipBox({ icon, title, note, all, openKey, defaultOpen, itemOf, approve, manage }) {
   if (!all.length) return '';
   const list = slipFilter(all);
   const searching = !!(STATE.slipQ || '').trim();
@@ -2595,15 +2595,21 @@ function slipBox({ icon, title, note, all, openKey, defaultOpen, itemOf, approve
         const u = STATE.users.find(x => x.id === p.uid);
         const item = itemOf(p);
         const ok = p.status === 'verified';
-        return `<div style="display:flex;align-items:center;gap:12px;padding:8px;border:1px solid var(--border);border-radius:12px;background:#fff">
-          <button class="btn btn-g" style="font-size:11px;padding:6px 9px;flex-shrink:0" onclick="zoomSlip('${esc(p.id)}')">🧾 ดูสลิป</button>
-          <div style="flex:1;min-width:0">
+        const id = esc(p.id);
+        return `<div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;padding:8px;border:1px solid var(--border);border-radius:12px;background:#fff">
+          <button class="btn btn-g" style="font-size:11px;padding:6px 9px;flex-shrink:0" onclick="zoomSlip('${id}')">🧾 ดูสลิป</button>
+          <div style="flex:1 1 160px;min-width:0">
             <div style="font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(u ? (u.nick || stripPrefix(u.name)) : 'ไม่ทราบชื่อ')}${u ? ` <span style="font-weight:500;color:var(--ink-3);font-size:11px">· เลขที่ ${userNo(u)}</span>` : ''}</div>
-            <div style="font-size:11px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(item.name)}${item.amount ? ' · ' + thb(item.amount) : ''}${p.paid_at ? ' · ' + slipWhen(p) : ''}</div>
+            <div style="font-size:11px;color:var(--ink-3);line-height:1.5">${esc(item.name)}${item.amount ? ' · ' + thb(item.amount) : ''}${p.paid_at ? ` · <span style="white-space:nowrap">${slipWhen(p)}</span>` : ''}</div>
           </div>
-          ${ok ? '<span class="pill pill-mint" style="font-size:10px">ยืนยันแล้ว</span>'
-               : approve ? `<button class="btn btn-g" style="font-size:11px;padding:6px 10px" onclick="${approve}('${esc(p.id)}')">อนุมัติ</button>`
-               : '<span class="pill pill-amber" style="font-size:10px">รอตรวจ</span>'}
+          ${manage ? `<div style="display:flex;align-items:center;gap:6px;margin-left:auto;flex-shrink:0">
+              ${ok ? '<span class="pill pill-mint" style="font-size:10px">ยืนยันแล้ว</span>' : '<span class="pill pill-amber" style="font-size:10px">รอตรวจ</span>'}
+              ${ok ? `<button class="btn btn-g" style="font-size:11px;padding:6px 10px" onclick="unverifyPayment('${id}')" title="กลับไปเป็นรอตรวจ">↩ ยกเลิก</button>` : ''}
+              <button class="btn btn-g" style="font-size:11px;padding:6px 10px;color:var(--danger)" onclick="deletePayment('${id}')" title="ลบสลิปนี้ทิ้ง">🗑 ลบ</button>
+            </div>`
+            : ok ? '<span class="pill pill-mint" style="font-size:10px">ยืนยันแล้ว</span>'
+            : approve ? `<button class="btn btn-g" style="font-size:11px;padding:6px 10px" onclick="${approve}('${id}')">อนุมัติ</button>`
+            : '<span class="pill pill-amber" style="font-size:10px">รอตรวจ</span>'}
         </div>`;
       }).join('')}
     </div>
@@ -2612,7 +2618,7 @@ function slipBox({ icon, title, note, all, openKey, defaultOpen, itemOf, approve
 // Every slip for the current term's items (approved or waiting); the queue above only shows waiting ones
 function renderTermSlips() {
   return slipBox({
-    icon: '🧾', title: 'สลิปเทอม 2', note: '', all: STATE.payments, openKey: 'termOpen', defaultOpen: true,
+    icon: '🧾', title: 'สลิปเทอม 2', note: '', all: STATE.payments, openKey: 'termOpen', defaultOpen: true, manage: true,
     itemOf: p => { const e = STATE.expenses.find(x => x.id === p.eid); return { name: (e?.name || '').replace(/ ?[📚🛡️🎓].*$/, ''), amount: e?.amount }; },
   });
 }
@@ -2622,6 +2628,27 @@ function renderOldSlips() {
     icon: '📁', title: 'สลิปเทอม 1 (รายการเก่า)', note: 'เก็บไว้เป็นหลักฐาน ไม่นับรวมยอดเทอมนี้', all: oldSlips(), openKey: 'oldOpen', defaultOpen: false,
     itemOf: p => OLD_SEED[p.eid] || { name: 'รายการเก่า', amount: null }, approve: 'approveOldSlip',
   });
+}
+// Term-2 slip box actions. Both update the screen first, then the database; on failure reload the truth.
+async function unverifyPayment(id) {
+  if (!confirm('ยกเลิกการยืนยันสลิปนี้?\nรายการจะกลับไปเป็น "รอตรวจ" และขึ้นในคิวอีกครั้ง')) return;
+  const back = p => p.id === id ? { ...p, status:'pending' } : p;
+  STATE.payments = STATE.payments.map(back);
+  STATE.allPayments = (STATE.allPayments || []).map(back);
+  render();
+  const { error } = await db.from('payments').update({ status:'pending' }).eq('id', id);
+  if (error) { console.error('unverifyPayment', error); showToast('ยกเลิกไม่สำเร็จ ลองอีกครั้ง','error'); await loadAll(); render(); return; }
+  showToast('ยกเลิกการยืนยันแล้ว · กลับไปรอตรวจ','info');
+}
+async function deletePayment(id) {
+  if (!confirm('ลบสลิปนี้ทิ้งถาวร?\nลบแล้วกู้คืนไม่ได้ นักเรียนต้องส่งสลิปใหม่')) return;
+  STATE.payments = STATE.payments.filter(p => p.id !== id);
+  STATE.allPayments = (STATE.allPayments || []).filter(p => p.id !== id);
+  delete SLIPS[id];
+  render();
+  const { error } = await db.from('payments').delete().eq('id', id);
+  if (error) { console.error('deletePayment', error); showToast('ลบไม่สำเร็จ ลองอีกครั้ง','error'); await loadAll(); render(); return; }
+  showToast('ลบสลิปแล้ว','warn');
 }
 async function approveOldSlip(id) {
   STATE.allPayments = (STATE.allPayments || []).map(p => p.id === id ? { ...p, status:'verified' } : p);
