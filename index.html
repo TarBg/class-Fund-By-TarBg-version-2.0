@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0F8A6B">
-<title>Class Fund · ม.6/9</title>
+<title>Class Fund · Web apps 3.0</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -194,6 +194,7 @@ input::placeholder,textarea::placeholder{color:rgba(15,46,42,.32)}
 .wl .fade-up:nth-child(2){animation-delay:.07s}.wl .fade-up:nth-child(3){animation-delay:.14s}.wl .fade-up:nth-child(4){animation-delay:.21s}
 .wl .fade-up:nth-child(5){animation-delay:.28s}.wl .fade-up:nth-child(6){animation-delay:.35s}.wl .fade-up:nth-child(7){animation-delay:.42s}
 .wl-top{display:flex;align-items:center;gap:11px}
+.ver-tag{display:inline-block;vertical-align:2px;margin-left:6px;font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:800;letter-spacing:.6px;color:#8B5A0F;background:var(--accent-tint);border:1px solid rgba(245,182,56,.45);padding:1px 6px;border-radius:999px}
 .wl-logo{width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,#0F8A6B,#0A6B53);display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 8px 18px -6px rgba(15,138,107,.55);flex-shrink:0}
 .wl-live{margin-left:auto;display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:600;color:var(--primary-deep);background:rgba(255,255,255,.7);border:1px solid rgba(15,138,107,.2);padding:5px 10px;border-radius:999px;backdrop-filter:blur(6px)}
 .wl-live i{width:7px;height:7px;border-radius:50%;background:var(--primary);animation:wlPing 1.6s ease-out infinite}
@@ -379,17 +380,21 @@ input::placeholder,textarea::placeholder{color:rgba(15,46,42,.32)}
 
 <script>
 /* ╔══════════════════════════════════════════════╗
-   ║   Class Fund v3.0 — Mint Money Design        ║
+   ║   Class Fund Web apps 3.0 — Mint Money Design║
    ║   ม.6/9 · โรงเรียนระยอง · 37 คน                ║
    ╚══════════════════════════════════════════════╝ */
 
 // ── Constants ──
 const SUPABASE_URL = 'https://jqzptcqrmzqsifhitzxi.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxenB0Y3FybXpxc2lmaGl0enhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5NTY4NzksImV4cCI6MjA5NDUzMjg3OX0.BI7Izly2-2PymjTfiT7wyAsAv75sDUb9cvdmIZuhZMM';
-const ADMIN_PASS   = 'TtKk0814414064';
+// Admin password: only a salted PBKDF2 hash, never the password itself. The real one lives in the
+// config table (key admin_pass_hash) once the admin changes it from the ยอดเงิน page; this is the
+// fallback until then.
+const ADMIN_HASH_BOOT = 'pbkdf2-sha256$210000$SmvNXVX/tCCKsxQFQl1Dbw==$rMZFhc0cuKGUdnVfFbC9AZkUkJb8ci0JnmTou0bmV44=';
 const INIT_BALANCE = 2108;   // money in the fund when term 2/2569 started
 const CLAUDE_MODEL = 'claude-sonnet-4-5';
 const CLASS_NAME   = 'ม.6/9 · ระยอง';
+const APP_VERSION  = 'Web apps 3.0';
 const ADMIN_NAME   = 'ตาต้า';
 const RECEIVER_NAME = 'นายนิติพัฒน์ ปัณราช';
 
@@ -588,6 +593,7 @@ async function loadAll() {
     const balRow = cfgs.find(r => r.key==='savedBalance');
     if (qrRow?.value) STATE.qr = qrRow.value;
     if (balRow?.value) STATE.savedBalance = +balRow.value;
+    STATE.adminHash = cfgs.find(r => r.key==='admin_pass_hash')?.value || '';
     await runMigrations(cfgs);
     setPayments((pRes.data||[]).map(p => ({...p, paidAt: p.paid_at})));
     return true;
@@ -1189,9 +1195,25 @@ function quickLogin() {
   STATE.pinBuf = '';
   render();
 }
-function tryAdminLogin() {
+// PBKDF2-SHA256 via Web Crypto. Stored as "pbkdf2-sha256$iterations$salt(base64)$hash(base64)".
+const b64 = buf => btoa(String.fromCharCode(...new Uint8Array(buf)));
+const unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+async function pbkdf2(pw, salt, iter) {
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveBits']);
+  return crypto.subtle.deriveBits({ name:'PBKDF2', hash:'SHA-256', salt, iterations: iter }, key, 256);
+}
+async function hashPassword(pw) {
+  const iter = 210000, salt = crypto.getRandomValues(new Uint8Array(16));
+  return `pbkdf2-sha256$${iter}$${b64(salt)}$${b64(await pbkdf2(pw, salt, iter))}`;
+}
+async function checkAdminPassword(pw) {
+  const [, iter, salt, hash] = (STATE.adminHash || ADMIN_HASH_BOOT).split('$');
+  return b64(await pbkdf2(pw, unb64(salt), +iter)) === hash;
+}
+async function tryAdminLogin() {
   const pw = document.getElementById('adm-pw')?.value || '';
-  if (pw === ADMIN_PASS) {
+  if (!pw) { showToast('ใส่รหัสผ่าน Admin','warn'); return; }
+  if (await checkAdminPassword(pw)) {
     const k = document.getElementById('adm-key')?.value?.trim() || '';
     if (k) {
       STATE.aiKey = k;
@@ -1384,7 +1406,7 @@ function renderWelcome() {
       <header class="wl-top fade-up">
         <div class="wl-logo" aria-hidden="true">🏦</div>
         <div>
-          <div class="num" style="font-size:12px;font-weight:800;letter-spacing:2px;color:var(--primary-deep)">CLASS FUND</div>
+          <div class="num" style="font-size:12px;font-weight:800;letter-spacing:2px;color:var(--primary-deep)">CLASS FUND<span class="ver-tag">${APP_VERSION}</span></div>
           <div style="font-size:11px;color:var(--ink-3);margin-top:1px">${esc(CLASS_NAME)}</div>
         </div>
         <span class="wl-live"><i></i>ยอดอัปเดตสด</span>
@@ -1789,7 +1811,7 @@ function renderSideShell(role, active, main) {
   return `<div class="sx-shell${sxMini?' mini':''}" id="app-shell" data-key="${key}">
     <aside class="sx${sxMini?' mini':''}" id="sx" onclick="sxRailClick(event)" aria-label="เมนู">
       <div class="sx-in">
-        <div class="sx-brand"><div class="sx-logo" aria-hidden="true">🏦</div><div class="sx-fade"><div class="num" style="font-size:12.5px;font-weight:800;letter-spacing:1.6px;color:var(--primary-deep)">CLASS FUND</div><div style="font-size:11px;color:var(--ink-3);margin-top:1px">${esc(CLASS_NAME)}</div></div></div>
+        <div class="sx-brand"><div class="sx-logo" aria-hidden="true">🏦</div><div class="sx-fade"><div class="num" style="font-size:12.5px;font-weight:800;letter-spacing:1.6px;color:var(--primary-deep)">CLASS FUND<span class="ver-tag">3.0</span></div><div style="font-size:11px;color:var(--ink-3);margin-top:1px">${esc(CLASS_NAME)}</div></div></div>
         <div class="sx-lbl">เมนู</div>
         <nav class="sx-nav" id="sx-nav">
           <span class="sx-glow" id="sx-glow" aria-hidden="true"></span>
@@ -2613,7 +2635,31 @@ function renderAdmBalance() {
         <button class="btn btn-p" onclick="updateBal()" style="white-space:nowrap">บันทึก</button>
       </div>
     </div>
+    <div class="card fade-up" style="padding:22px;margin-top:14px">
+      <h3 class="h3" style="margin-bottom:4px">🔐 เปลี่ยนรหัส Admin</h3>
+      <p style="font-size:12px;color:var(--ink-3);margin-bottom:12px;line-height:1.55">${STATE.adminHash ? 'ใช้รหัสใหม่ที่ตั้งไว้ในระบบอยู่' : 'ยังใช้รหัสเดิมอยู่ ควรเปลี่ยนตอนนี้ เพราะรหัสเดิมเคยอยู่ในโค้ดที่ใครก็เปิดดูได้'}</p>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <input id="pw-old" type="password" autocomplete="current-password" placeholder="รหัสปัจจุบัน"/>
+        <input id="pw-new" type="password" autocomplete="new-password" placeholder="รหัสใหม่ (อย่างน้อย 8 ตัว)"/>
+        <input id="pw-new2" type="password" autocomplete="new-password" placeholder="พิมพ์รหัสใหม่อีกครั้ง"/>
+        <button class="btn btn-p" onclick="changeAdminPassword()">เปลี่ยนรหัส</button>
+      </div>
+    </div>
   </div>`;
+}
+async function changeAdminPassword() {
+  const v = id => document.getElementById(id)?.value || '';
+  const oldPw = v('pw-old'), pw = v('pw-new'), pw2 = v('pw-new2');
+  if (!(await checkAdminPassword(oldPw))) { showToast('รหัสปัจจุบันไม่ถูก','error'); return; }
+  if (pw.length < 8) { showToast('รหัสใหม่ต้องมีอย่างน้อย 8 ตัว','warn'); return; }
+  if (pw !== pw2) { showToast('รหัสใหม่สองช่องไม่ตรงกัน','warn'); return; }
+  const value = await hashPassword(pw);
+  const { error } = await db.from('config').upsert({ key:'admin_pass_hash', value });
+  if (error) { console.error('changeAdminPassword', error); showToast('บันทึกไม่สำเร็จ ลองอีกครั้ง','error'); return; }
+  STATE.adminHash = value;
+  ['pw-old','pw-new','pw-new2'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  showToast('เปลี่ยนรหัส Admin แล้ว ✅','success');
+  render();
 }
 function renderDesktopAdmin() {
   const r = STATE.route;
